@@ -242,6 +242,9 @@ footer a { color: var(--muted); }
 .ioshint p b { color: var(--text); }
 .ioshint .ioi { color: var(--c2); flex: none; }
 .ioshint .ioi svg { width: 22px; height: 22px; display: block; }
+.ioshint #openext { flex: none; text-decoration: none; }
+.ioshint #openext[hidden] { display: none; }
+@media (max-width: 640px) { .ioshint { flex-wrap: wrap; } .ioshint #openext { order: 3; width: 100%; justify-content: center; padding: 10px; } }
 .ioshint .x { all: unset; cursor: pointer; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; color: var(--muted); font-size: 22px; flex: none; }
 .ioshint .x:hover { background: var(--surface-2); color: var(--text); }
 .ioshint .x:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -291,6 +294,7 @@ footer a { color: var(--muted); }
   <div class="ioshint card" id="ioshint" hidden>
     <span class="ioi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg></span>
     <p id="ioshint-text"><b>Сложи ГРИГОРИВО на началния екран.</b> В Safari натисни „Сподели“ долу в средата, после „Добави към началния екран“.</p>
+    <a class="btn install" id="openext" hidden href="#"></a>
     <button class="x" id="ioshint-x" aria-label="Затвори подсказката">×</button>
   </div>
 
@@ -507,8 +511,14 @@ initSections();
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 // Вградените браузъри (Messenger, Facebook, Instagram и др.) правят от сайта старо Android приложение,
 // което Google Play Protect блокира. Там не предлагаме инсталиране, а подсказваме първо да се отвори в Chrome или Safari.
-const UA = navigator.userAgent;
-const inApp = /FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Line\/|MicroMessenger|Snapchat|TikTok|; wv\)/i.test(UA);
+// Новият браузър на Meta понякога се представя като обикновен Chrome, затова гледаме още:
+// пометката fbclid, която Facebook и Messenger слагат на линковете, откъде е дошъл човекът и вътрешното име на браузъра.
+const UA = navigator.userAgent, qs = new URLSearchParams(location.search);
+const brands = (navigator.userAgentData?.brands || []).map((b) => b.brand).join(', ');
+const viaMeta = qs.has('fbclid') || /facebook\.com|messenger\.com|instagram\.com/i.test(document.referrer);
+const inApp = viaMeta || /Android WebView/i.test(brands) || /FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Line\/|MicroMessenger|Snapchat|TikTok|; wv\)/i.test(UA);
+// fbclid се маха от адреса, за да може „Отвори в Chrome“ да отвори чист линк, на който инсталирането работи
+if (qs.has('fbclid')) { qs.delete('fbclid'); history.replaceState(null, '', location.pathname + (qs.toString() ? '?' + qs : '') + location.hash); }
 let installEvt = null;
 addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); if (inApp) return; installEvt = e; $('#install').hidden = false; });
 $('#install').addEventListener('click', async () => {
@@ -521,10 +531,23 @@ addEventListener('appinstalled', () => { $('#install').hidden = true; });
 // iPhone и iPad: Safari няма бутон за инсталиране, затова показваме къде е, докато приложението не е на началния екран
 const isIOS = !/Android/i.test(navigator.userAgent) && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
-if (inApp && !standalone) {
-  $('#ioshint-text').innerHTML = isIOS
-    ? '<b>Отвори ГРИГОРИВО в Safari, за да го сложиш на началния екран.</b> Натисни трите точки или „Сподели“ и избери „Отвори в Safari“.'
-    : '<b>Отвори ГРИГОРИВО в Chrome, за да го инсталираш.</b> Натисни трите точки горе вдясно и избери „Отвори в Chrome“. Оттук инсталирането се блокира от Google Play Protect.';
+if (qs.has('diag')) {
+  $('#ioshint-text').innerHTML = '<b>Проверка на браузъра.</b> Вграден: ' + (inApp ? 'да' : 'не') + '. Идва от: ' + (document.referrer || 'няма') + '. Име: ' + (brands || 'няма') + '.<br><span class="num" style="font-size:11px;word-break:break-all">' + UA.replace(/</g, '') + '</span>';
+  $('#ioshint').hidden = false;
+} else if (inApp && !standalone) {
+  // Бутонът наистина отваря сайта навън: на Android с intent към Chrome (ако го няма, браузъра по подразбиране),
+  // на iPhone със схемата x-safari-https, която отваря Safari
+  const clean = location.host + location.pathname;
+  const ext = $('#openext');
+  if (isIOS) {
+    $('#ioshint-text').innerHTML = '<b>Отвори ГРИГОРИВО в Safari, за да го сложиш на началния екран.</b> Ако бутонът не сработи: трите точки или „Сподели“ и „Отвори в Safari“.';
+    ext.href = 'x-safari-https://' + clean; ext.textContent = 'Отвори в Safari';
+  } else {
+    $('#ioshint-text').innerHTML = '<b>Отвори ГРИГОРИВО в Chrome, за да го инсталираш.</b> Оттук инсталирането се блокира от Google Play Protect.';
+    ext.href = 'intent://' + clean + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent('https://' + clean) + ';end';
+    ext.textContent = 'Отвори в Chrome';
+  }
+  ext.hidden = false;
   $('#ioshint').hidden = false;
 } else if (isIOS && !standalone && !store.get('iosHintClosed')) $('#ioshint').hidden = false;
 $('#ioshint-x').addEventListener('click', () => { $('#ioshint').hidden = true; store.set('iosHintClosed', true); });
