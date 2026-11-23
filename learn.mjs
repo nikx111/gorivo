@@ -65,3 +65,45 @@ export function accuracy(rows, actual, fuel, today) {
   }
   return out;
 }
+
+// --- Диапазон: колко може да се разминава прогнозата h дни напред ---
+// Начало: грешката от проверката на модела върху 2 години (80% от седмиците са в ±q80), разпределена по дни
+// като √(h/7). Щом има реални проверени прогнози, тяхната грешка постепенно заема мястото ѝ.
+const quantile = (a, q) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(q * s.length))]; };
+export function band(rows, actual, fuel, today, h, q80Week) {
+  const prior = Math.max(0.005, (q80Week ?? 0.015) * Math.sqrt(h / 7));
+  const errs = pairs(rows, actual, fuel, today).filter((r) => r.h === h && Number.isFinite(r.pred)).map((r) => Math.abs(r.pred - r.act));
+  const live = quantile(errs, 0.8), n = errs.length;
+  return Math.max(0.005, live == null ? prior : (prior * 10 + live * n) / (10 + n));
+}
+
+// --- Дни от седмицата и празници ---
+// Някои дни цените се сменят по-често. От дневната история на средната цена се смята средната промяна
+// за всеки ден от седмицата (и за празник) спрямо обичайната. Свива се към 0, докато има малко седмици.
+// Официални празници в България; Великден е по православния календар
+const HOLIDAYS = new Set([
+  '2026-01-01', '2026-03-03', '2026-04-10', '2026-04-11', '2026-04-12', '2026-04-13', '2026-05-01', '2026-05-06', '2026-05-24', '2026-09-06', '2026-09-22', '2026-12-24', '2026-12-25', '2026-12-26',
+  '2027-01-01', '2027-03-03', '2027-04-30', '2027-05-01', '2027-05-02', '2027-05-03', '2027-05-06', '2027-05-24', '2027-09-06', '2027-09-22', '2027-12-24', '2027-12-25', '2027-12-26',
+]);
+export const dayKind = (d) => (HOLIDAYS.has(d) ? 7 : new Date(d + 'T12:00:00Z').getUTCDay());
+export const DAY_NAMES = ['неделя', 'понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота', 'празник'];
+
+// series: [[date, price]] за едно гориво, по дни
+export function weekdays(series) {
+  const s = [...series].sort((a, b) => a[0].localeCompare(b[0])), ch = [];
+  for (let i = 1; i < s.length; i++) if (days(s[i - 1][0], s[i][0]) === 1) ch.push([dayKind(s[i][0]), s[i][1] - s[i - 1][1]]);
+  const mean = ch.length ? ch.reduce((a, c) => a + c[1], 0) / ch.length : 0;
+  const eff = [], n = [];
+  for (let k = 0; k < 8; k++) {
+    const v = ch.filter((c) => c[0] === k).map((c) => c[1] - mean);
+    n.push(v.length);
+    eff.push(v.length ? clamp((v.reduce((a, x) => a + x, 0) / v.length) * (v.length / (v.length + 4)), -0.01, 0.01) || 0 : 0);
+  }
+  return { eff, n, weeks: Math.floor(ch.length / 7) };
+}
+// Натрупаният ефект на дните от утре до h дни напред
+export const weekdayShift = (W, from, h) => {
+  let s = 0;
+  for (let k = 1; k <= h; k++) s += W.eff[dayKind(new Date(Date.parse(from + 'T12:00:00Z') + k * 864e5).toISOString().slice(0, 10))];
+  return s;
+};

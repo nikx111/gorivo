@@ -70,6 +70,8 @@ header { display: flex; align-items: center; justify-content: space-between; gap
 .tmr { border-radius: 10px; padding: 9px 11px; background: var(--surface-2); display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .tmr span { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 .tmr b { font-size: 18px; font-weight: 600; }
+.tmr .tr { font-size: 11.5px; color: var(--muted); }
+.rng2 { font-style: normal; font-size: 10.5px; color: var(--faint); margin-top: -4px; }
 .tmr em { font-style: normal; font-size: 13px; font-weight: 600; color: var(--flat); margin-left: auto; }
 .tmr.down { background: var(--down-soft); } .tmr.down em { color: var(--down); }
 .tmr.up { background: var(--up-soft); } .tmr.up em { color: var(--up); }
@@ -278,7 +280,7 @@ footer a { color: var(--muted); }
 
   <main id="sections">
   <section data-sec="when">
-    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="when" aria-label="Премести блока „Прогноза по дни“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Прогноза по дни за всички горива</h2></div><p class="sub">Средна цена в страната, € за литър. Зеленото е най-евтиният ден. Разлики под 1 цент не си струват чакането.</p></div></div>
+    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="when" aria-label="Премести блока „Прогноза по дни“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Прогноза по дни за всички горива</h2></div><p class="sub">Средна цена в страната, € за литър. Отдолу е диапазонът, в който цената е в 8 от 10 случая. Зелено е денят, в който е по-евтино със сигурност, тоест дори горната граница е под днешната цена.</p></div></div>
     <div class="card scroll"><table id="bydays"></table></div>
     <p class="scrollhint" data-for="bydays">Плъзни таблицата настрани за още дни</p>
   </section>
@@ -356,7 +358,7 @@ footer a { color: var(--muted); }
       <div class="controls"><div class="seg" id="accfuel" role="group" aria-label="Гориво"><button data-v="gasoline" aria-pressed="true">А95</button><button data-v="diesel">Дизел</button><button data-v="lpg">Газ</button></div></div>
     </div>
     <div class="acc" id="acc"></div>
-    <div class="card" style="margin-top:12px"><div class="learnhead"><b>Как се учи от грешките си</b><span class="sub" style="margin:0">Всяка прогноза се сравнява с реалната цена, когато денят дойде. От грешките се смятат две поправки: колко бързо реално се движат цените и дали оценката системно е по-висока или по-ниска. Поправките растат постепенно, докато се събират проверени дни.</span></div><div class="scroll"><table id="learn"></table></div></div>
+    <div class="card" style="margin-top:12px"><div class="learnhead"><b>Как се учи от грешките си</b><span class="sub" style="margin:0">Всяка прогноза се сравнява с реалната цена, когато денят дойде. От грешките се смятат две поправки: колко бързо реално се движат цените и дали оценката системно е по-висока или по-ниска. Поправките растат постепенно, докато се събират проверени дни.</span></div><div class="scroll"><table id="learn"></table></div><p class="note" id="learnweek"></p></div>
     <div class="card chartbox" style="margin-top:12px"><div class="head" style="margin-bottom:4px"><p class="sub" style="margin:0">Промяна на цената за седмица, центове: колони е реалната, линия е оценката</p></div><div class="chartwrap" style="height:240px"><canvas id="accchart" aria-label="Реална и предсказана промяна по седмици"></canvas></div></div>
   </section>
 
@@ -375,7 +377,7 @@ footer a { color: var(--muted); }
 
   <footer>
     <p><b>ГРИГОРИВО</b> събира цените веднъж на ден.</p>
-    <p><b>Как се смята оценката.</b> Моделът е изчислен върху официалните седмични цени в България от Седмичния петролен бюлетин на Европейската комисия (от 2015 г.) и борсовите цени на бензин RBOB и дизел ULSD в евро. Той описва две неща: колко от промяната на борсата стига до колонката и за колко седмици, и колко бързо цената се връща към нивото, което борсата оправдава. Коефициентите се изчисляват наново всяка седмица върху последните 3 до 4 години. Оценката за следващите дни е тази седмична промяна, разпределена по дни и приложена към днешната цена от Fuelo. Това е оценка, не обещание: търговците решават сами кога и с колко да сменят цените.</p>
+    <p><b>Как се смята оценката.</b> Моделът е изчислен върху официалните седмични цени в България от Седмичния петролен бюлетин на Европейската комисия (от 2015 г.) и борсовите цени на бензин RBOB и дизел ULSD в евро. Той описва две неща: колко от промяната на борсата стига до колонката и за колко седмици, и колко бързо цената се връща към нивото, което борсата оправдава. Коефициентите се изчисляват наново всяка седмица върху последните 3 до 4 години. Оценката за следващите дни е тази седмична промяна, разпределена по дни и приложена към днешната цена от Fuelo. После се поправя според собствените грешки на ГРИГОРИВО и според това как се движат цените в различните дни от седмицата и около празници. Диапазонът показва къде е цената в 8 от 10 случая. Това е оценка, не обещание: търговците решават сами кога и с колко да сменят цените.</p>
     <p>Източници: цени на колонката от <a href="https://fuelo.net" rel="noopener">Fuelo.net</a>, борсови цени и курсове от Yahoo Finance (фючърси BZ=F, CL=F, HO=F, RB=F). Седмични цени и данъци от <a href="https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en" rel="noopener">бюлетина на ЕК</a>; акцизът е изчислен от него (бензин 0,363 €/л, дизел 0,330 €/л). Проверки: Brent срещу ICE, курсът срещу ЕЦБ. Данните се обновяват веднъж на ден.</p>
   </footer>
 </div>
@@ -503,7 +505,7 @@ function renderFuels() {
       <button class="grip" data-fuel="${code}" aria-label="Премести ${f.name}: хвани или ползвай стрелките">${GRIP}</button>
       <div class="name">${f.name}${code === myFuel ? '<span class="minetag">твоето</span>' : ''}</div>
       <div class="today"><span class="price num">${fmt(f.price)}<small>€</small></span><span class="lbl2">днес, средно</span></div>
-      <div class="tmr ${dir(d1)}"><span>Утре</span><b class="num">~${fmt(t.price)} €</b><em>${dir(d1) === 'flat' ? 'същото' : (d1 < 0 ? '↓ ' : '↑ ') + cents(d1)}</em></div>
+      <div class="tmr ${dir(d1)}"><span>Утре</span><b class="num">~${fmt(t.price)} €</b><small class="num tr">${fmt(t.lo)} до ${fmt(t.hi)}</small><em>${dir(d1) === 'flat' ? 'същото' : (d1 < 0 ? '↓ ' : '↑ ') + cents(d1)}</em></div>
       <div class="trend ${dir(d3)}">${trend}</div>
       <div class="days">${three.map((a) => `<div>${wd(a.date)} ${dmy(a.date)}<b class="num">~${fmt(a.price)}</b></div>`).join('')}</div>
       <div class="range num">В страната от ${fmt(f.min)} до ${fmt(f.max)} €</div>
@@ -615,30 +617,39 @@ $('#tank').addEventListener('input', () => { store.set('tank', TANK()); renderWh
 function renderWhen() {
   const code = myFuel || fuelOrder[0], f = L.bg[code];
   const days = [{ date: f.date, price: f.price, today: true }, ...f.ahead];
-  const best = days.reduce((a, b) => (b.price < a.price - 1e-9 ? b : a));
-  const save = f.price - best.price, rise = days.at(-1).price - f.price;
   const dayName = (d) => WDL[new Date(d + 'T12:00:00').getDay()];
-  let verdict, cls, text;
-  if (best.today || save < 0.01) {
-    if (rise >= 0.01) { verdict = 'Зареди днес'; cls = 'now'; text = `Цената се очаква да расте с около ${cents(rise)} до ${dayName(days.at(-1).date)}.`; }
-    else { verdict = 'Зареди, когато ти е удобно'; cls = ''; text = `В следващите дни не се очаква промяна над 1 цент на литър.`; }
-  } else {
+  // Съвет „изчакай“ само ако дори горната граница на диапазона е под днешната цена, тоест спестяването е по-голямо от грешката
+  const fut = f.ahead;
+  const sure = fut.filter((d) => f.price - d.hi >= 0.005 && f.price - d.price >= 0.01);
+  const best = sure.length ? sure.reduce((a, b) => (b.price < a.price ? b : a)) : null;
+  const riseDay = fut.find((d) => d.lo - f.price >= 0.005 && d.price - f.price >= 0.01);
+  const maybe = fut.reduce((a, b) => (b.price < a.price ? b : a));
+  let verdict, cls, text, saveTxt = '';
+  if (best) {
     verdict = `Ако можеш, изчакай до ${dayName(best.date)}`; cls = 'wait';
-    text = `Очаква се ${f.name} да е около ${fmt(best.price)} € на литър, с ${cents(save)} по-евтино от днес.`;
+    text = `Очаква се ${f.name} да е между ${fmt(best.lo)} и ${fmt(best.hi)} € на литър, най-вероятно около ${fmt(best.price)} €. Това е с около ${cents(f.price - best.price)} по-евтино от днес.`;
+    saveTxt = `За ${TANK()} литра спестяваш между <b class="num">${fmt((f.price - best.hi) * TANK())}</b> и <b class="num">${fmt((f.price - best.lo) * TANK())} €</b>.`;
+  } else if (riseDay) {
+    verdict = 'Зареди днес'; cls = 'now';
+    text = `До ${dayName(riseDay.date)} цената се очаква да е между ${fmt(riseDay.lo)} и ${fmt(riseDay.hi)} €, тоест по-висока от днешната дори при грешка в прогнозата.`;
+  } else {
+    verdict = 'Зареди, когато ти е удобно'; cls = '';
+    text = f.price - maybe.price >= 0.01
+      ? `Може да поевтинее с около ${cents(f.price - maybe.price)} до ${dayName(maybe.date)}, но това е в рамките на грешката на прогнозата, затова не си струва да чакаш.`
+      : 'В следващите дни не се очаква промяна, по-голяма от грешката на прогнозата.';
   }
-  const eur = save * TANK();
   $('#advice').innerHTML = `<div class="what">${myFuel ? 'Твоето гориво: ' + f.name : f.name + ', докато не избереш своето'}</div>
     <div class="verdict ${cls}">${verdict}</div><p>${text}</p>
-    ${cls === 'wait' ? `<div class="save">За ${TANK()} литра разликата е около <b class="num">${fmt(eur)} €</b>.</div>` : ''}
-    <p style="font-size:12.5px">Днес средно ${fmt(f.price)} € в страната. Оценката обикновено греши с 1 до 1,5 цента за седмица, затова я приемай като насока.</p>`;
+    ${saveTxt ? `<div class="save">${saveTxt}</div>` : ''}
+    <p style="font-size:12.5px">Днес средно ${fmt(f.price)} € в страната. Диапазонът идва от реалните грешки на прогнозата: в 8 от 10 случая цената е вътре в него.</p>`;
   const lo = Math.min(...days.map((d) => d.price)), hi = Math.max(...days.map((d) => d.price)), span = Math.max(hi - lo, 0.02);
-  $('#dbars').innerHTML = days.map((d) => `<div class="dbar ${d.today ? 'today' : ''} ${d === best && !best.today && save >= 0.01 ? 'best' : ''}">
-      <b>${fmt(d.price)}</b><span class="col" style="height:${36 + Math.round((d.price - lo) / span * 84)}px"></span><span>${d.today ? 'днес' : wd(d.date) + ' ' + dmy(d.date)}</span></div>`).join('');
+  $('#dbars').innerHTML = days.map((d) => `<div class="dbar ${d.today ? 'today' : ''} ${best && d === best ? 'best' : ''}">
+      <b>${fmt(d.price)}</b>${d.today ? '<i class="rng2">&nbsp;</i>' : `<i class="rng2">±${Math.round((d.hi - d.lo) / 2 * 100) || 1} ст.</i>`}<span class="col" style="height:${36 + Math.round((d.price - lo) / span * 84)}px"></span><span>${d.today ? 'днес' : wd(d.date) + ' ' + dmy(d.date)}</span></div>`).join('');
   const dates = days.map((d) => d.date);
   $('#bydays').innerHTML = `<thead><tr><th>Гориво</th>${dates.map((d, i) => `<th>${i ? wd(d) + ' ' + dmy(d) : 'Днес'}</th>`).join('')}</tr></thead><tbody>` +
     fuelOrder.map((c) => {
-      const g = L.bg[c], row = [g.price, ...g.ahead.map((a) => a.price)], m = Math.min(...row);
-      return `<tr class="${c === myFuel ? 'mine' : ''}"><td class="brand">${g.name}</td>${row.map((v, i) => `<td class="num ${i && v === m && g.price - m >= 0.01 ? 'cheap' : ''}">${i ? '~' : ''}${fmt(v)}</td>`).join('')}</tr>`;
+      const g = L.bg[c], row = [g.price, ...g.ahead.map((a) => a.price)], m = Math.min(...row), rg = [null, ...g.ahead];
+      return `<tr class="${c === myFuel ? 'mine' : ''}"><td class="brand">${g.name}</td>${row.map((v, i) => `<td class="num ${i && v === m && g.price - rg[i].hi >= 0.005 ? 'cheap' : ''}">${i ? '~' : ''}${fmt(v)}${i ? `<span class="lbl">${fmt(rg[i].lo)} до ${fmt(rg[i].hi)}</span>` : ''}</td>`).join('')}</tr>`;
     }).join('') + '</tbody>';
 }
 
@@ -763,7 +774,18 @@ function renderAcc() {
 
 const OKI = '<svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-label="Наред"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg>';
 const BADI = '<svg class="bad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-label="Внимание"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.01"/></svg>';
+const WDN = ['неделя', 'понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота', 'празник'];
+function renderWeek() {
+  const code = myFuel || fuelOrder[0], W = L.bg[code]?.weekdays;
+  if (!W) { $('#learnweek').textContent = ''; return; }
+  const found = W.eff.map((e, k) => [k, e]).filter(([k, e]) => Math.abs(e) >= 0.002);
+  $('#learnweek').textContent = W.weeks < 3
+    ? `Дни от седмицата и празници: за ${L.bg[code].name} има ${W.weeks} пълни седмици дневна история. Ефектът им се включва постепенно, смислен е след около 3 седмици.`
+    : found.length ? `Дни от седмицата за ${L.bg[code].name}: ` + found.map(([k, e]) => `${WDN[k]} ${e > 0 ? '+' : '−'}${fmt(Math.abs(e) * 100, 1)} ст.`).join(', ') + ` спрямо обичайното (от ${W.weeks} седмици).`
+    : `Дни от седмицата за ${L.bg[code].name}: за ${W.weeks} седмици няма ден, в който цената да се мени по-различно.`;
+}
 function renderLearn() {
+  renderWeek();
   const lv = L.live; if (!lv?.learned) { $('#learn').innerHTML = ''; return; }
   const ct = (x) => (x == null ? 'няма' : '±' + fmt(x * 100, 2) + ' ст.');
   const speed = (l) => (l.n < 3 ? 'още учи' : l.s < 0.95 ? 'по-бавно, ×' + fmt(l.s) : l.s > 1.05 ? 'по-бързо, ×' + fmt(l.s) : 'точна');

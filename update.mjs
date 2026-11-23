@@ -17,7 +17,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { learn, apply, accuracy, HORIZONS } from './learn.mjs';
+import { learn, apply, accuracy, band, weekdays, weekdayShift, HORIZONS } from './learn.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const envFile = path.join(here, '.env');
@@ -286,8 +286,15 @@ const learned = {};
 for (const [code, f] of Object.entries(bg)) {
   const Lr = learn(fcs, actual, code, TODAY);
   learned[code] = { s: Lr.s, n: Lr.n, corr: Lr.corr, count: Lr.count };
-  f.ahead.forEach((a, i) => { a.price = +apply(Lr, f.price, a.raw, i + 1).toFixed(3); });
+  // Дни от седмицата и празници: научени от дневната история на средната цена
+  const W = weekdays(hist.filter((r) => r.fuel === code).map((r) => [r.date, r.price]));
+  const q80 = model?.fuels?.[BASE[code]]?.check?.q80;
+  f.ahead.forEach((a, i) => {
+    const p = apply(Lr, f.price, a.raw, i + 1) + weekdayShift(W, f.date, i + 1), w = band(fcs, actual, code, TODAY, i + 1, q80);
+    a.price = +p.toFixed(3); a.lo = +(p - w).toFixed(3); a.hi = +(p + w).toFixed(3);
+  });
   f.learn = learned[code];
+  f.weekdays = { eff: W.eff, n: W.n, weeks: W.weeks };
 }
 for (const [code, f] of Object.entries(bg)) for (const a of f.ahead) {
   const i = fcs.findIndex((r) => r.made === f.date && r.target === a.date && r.fuel === code);
@@ -314,6 +321,9 @@ const yesterday = Object.fromEntries(Object.keys(bg).map((c) => {
 }));
 console.log('Учене: ' + Object.entries(learned).map(([c, l]) => c + ' скорост ' + l.s.toFixed(2) + ' от ' + l.n + ', поправка утре ' + (l.corr[0] * 100).toFixed(1) + ' ст.').join('; '));
 
+const latestGasoil = {};
+const days7 = (d) => (Date.parse(TODAY) - Date.parse(d)) / 864e5 >= 7 && (Date.parse(TODAY) - Date.parse(d)) / 864e5 <= 10;
+
 // --- Проверки на данните: всяка стойност се сверява с независим източник ---
 const checks = [];
 const ck = (ok, name, detail) => checks.push({ ok, name, detail });
@@ -336,11 +346,38 @@ if (model) {
     if (c) ck(c.mae < c.naive_mae, name + ': моделът бие „няма промяна“', 'За ' + c.weeks + ' седмици: грешка ' + n2(c.mae * 100) + ' ст. срещу ' + n2(c.naive_mae * 100) + ' ст.');
   }
 } else ck(false, 'Модел върху историята', 'model.py не тръгна: ползва се простото правило');
+// ICE: Brent за проверка и газьол (европейският ориентир за дизела). Безплатно има само днешната цена,
+// затова газьолът се записва всеки ден в data/ice-gasoil.csv и така се трупа собствена история.
+let gasoil = null;
 try {
-  const r = await fetch('https://scanner.tradingview.com/futures/scan', { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' }, body: JSON.stringify({ symbols: { tickers: ['ICEEUR:BRN1!'] }, columns: ['close'] }) });
-  const ice = (await r.json()).data?.[0]?.d?.[0], y = oil.rows.at(-1)[col('brent')];
+  const r = await fetch('https://scanner.tradingview.com/futures/scan', { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' }, body: JSON.stringify({ symbols: { tickers: ['ICEEUR:BRN1!', 'ICEEUR:ULS1!'] }, columns: ['close'] }) });
+  const got = Object.fromEntries(((await r.json()).data || []).map((x) => [x.s, x.d[0]]));
+  const ice = got['ICEEUR:BRN1!'], y = oil.rows.at(-1)[col('brent')];
   if (ice) { const dd = (y / ice - 1) * 100; ck(Math.abs(dd) <= 1.5, 'Brent: Yahoo срещу ICE', 'Yahoo ' + n2(y) + ' $, ICE ' + n2(ice) + ' $ (' + n2(dd, 1) + '%)'); }
+  if (got['ICEEUR:ULS1!']) gasoil = got['ICEEUR:ULS1!'];
 } catch {}
+{
+  const gf = path.join(dataDir, 'ice-gasoil.csv');
+  const rows = existsSync(gf) ? readFileSync(gf, 'utf8').trim().split('\n').slice(1).filter(Boolean).map((l) => l.split(',')) : [];
+  if (gasoil && !rows.some((r) => r[0] === TODAY)) rows.push([TODAY, gasoil]);
+  writeFileSync(gf, 'date,usd_per_tonne\n' + rows.map((r) => r.join(',')).join('\n') + '\n');
+  latestGasoil.history = rows.length;
+  if (gasoil) {
+    // 1 тон дизел е около 1183 литра (плътност 0,845)
+    latestGasoil.eurL = gasoil * 0.845 / 1000 / fxLast;
+    latestGasoil.usdT = gasoil;
+    for (const c of ['diesel', 'dieselplus']) {
+      const b = bg[c]?.breakdown; if (!b) continue;
+      b.product = latestGasoil.eurL; b.margin = bg[c].price - b.vat - b.excise - b.product; b.productSrc = 'ICE газьол';
+    }
+  }
+  // Проверка: американският дизел (основата на модела) и европейският газьол трябва да се движат заедно
+  const old = rows.find((r) => days7(r[0]));
+  if (old && gasoil) {
+    const ice7 = (gasoil / +old[1] - 1) * 100, ho = oil.rows.filter((r) => r[col('diesel')] != null), hoNow = ho.at(-1)[col('diesel')], hoOld = [...ho].reverse().find((r) => r[0] <= old[0])?.[col('diesel')];
+    if (hoOld) { const us7 = (hoNow / hoOld - 1) * 100; ck(Math.abs(us7 - ice7) <= 4, 'Дизел: САЩ и Европа се движат заедно', 'За седмица: ULSD ' + n2(us7, 1) + '%, ICE газьол ' + n2(ice7, 1) + '%'); }
+  } else if (gasoil) ck(true, 'Европейски газьол (ICE): събира се история', n2(gasoil) + ' $/т днес, записани дни: ' + rows.length);
+}
 try {
   const x = await (await fetch('https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml')).text();
   const ecb = +x.match(/currency='USD' rate='([\d.]+)'/)[1], day = x.match(/time='([\d-]+)'/)[1];
@@ -356,7 +393,7 @@ console.log('Проверки: ' + (checks.length - failed.length) + ' от ' + 
 
 const brentCh = pressure({ src: 'BZ=F', w: 1 }, 1).ch;
 const latest = {
-  updated: new Date().toISOString(), date: TODAY, bg, brands, countries, bno, checks, live,
+  updated: new Date().toISOString(), date: TODAY, bg, brands, countries, bno, checks, live, gasoil: latestGasoil,
   model: model ? { bulletin: model.bulletin_date, fuels: Object.fromEntries(Object.entries(model.fuels).map(([k, v]) => [k, { check: v.check, driver: v.driver, gap: v.gap }])) } : null,
   oil: { brent: oil.rows.at(-1)[col('brent')], brentWeek: brentCh, eurusd: fxLast, dieselWeek: pressure({ src: 'HO=F', w: 1 }, 1).ch, gasolineWeek: pressure({ src: 'RB=F', w: 1 }, 1).ch },
   fuelo: { calls, remaining: Number.isFinite(remaining) ? remaining : null, limit: 100 },
@@ -368,7 +405,7 @@ console.log('Fuelo: ' + calls + ' заявки сега, остават ' + (Num
 const eur = (x) => x.toFixed(2).replace('.', ',');
 const pct = (x) => (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(1).replace('.', ',') + '%';
 const arrow = (d) => (d <= -0.005 ? '↓' : d >= 0.005 ? '↑' : '=');
-const lines = Object.values(bg).map((f) => f.name + ': ' + eur(f.price) + ' → ~' + eur(f.ahead[0].price) + ' € ' + arrow(f.ahead[0].price - f.price));
+const lines = Object.values(bg).map((f) => f.name + ': ' + eur(f.price) + ' → утре ' + eur(f.ahead[0].lo) + ' до ' + eur(f.ahead[0].hi) + ' € ' + arrow(f.ahead[0].price - f.price));
 const D = bg.diesel, A = bg.gasoline;
 const title = 'Горива утре: дизел ' + arrow(D.ahead[0].price - D.price) + ' ~' + eur(D.ahead[0].price) + ' €, А95 ' + arrow(A.ahead[0].price - A.price) + ' ~' + eur(A.ahead[0].price) + ' €';
 const gap = (f) => { const g = model?.fuels?.[f]?.gap; return g == null ? '' : (g > 0.005 ? ' над' : g < -0.005 ? ' под' : ' около') + ' нивото, което борсата оправдава' + (Math.abs(g) > 0.005 ? ' (с ' + Math.round(Math.abs(g) * 100) + ' ст.)' : ''); };

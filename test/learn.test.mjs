@@ -49,3 +49,31 @@ test('поправките са ограничени дори при луди д
   assert.ok(L.s >= 0.3 && L.s <= 2);
   assert.ok(L.corr.every((c) => Math.abs(c) <= 0.03));
 });
+
+import { band, weekdays, weekdayShift, dayKind } from '../learn.mjs';
+
+test('диапазонът започва от проверката на модела и расте с дните напред', () => {
+  const b1 = band([], () => undefined, 'diesel', '2026-11-23', 1, 0.02), b5 = band([], () => undefined, 'diesel', '2026-11-23', 5, 0.02);
+  assert.ok(b1 >= 0.005 && b5 > b1, b1 + ' ' + b5);
+});
+
+test('диапазонът се стеснява, когато реалните прогнози са точни', () => {
+  const { rows, actual, today } = world(40, { speed: 1, offset: 0 });
+  const exact = rows.map((r) => ({ ...r, pred: actual('diesel', r.target) ?? r.pred }));
+  assert.ok(band(exact, actual, 'diesel', today, 1, 0.03) < 0.03 * Math.sqrt(1 / 7));
+});
+
+test('намира, че цените скачат в понеделник', () => {
+  const series = [];
+  let p = 1.8;
+  for (let i = 0; i < 56; i++) { const d = day(i); if (dayKind(d) === 1) p += 0.01; series.push([d, +p.toFixed(3)]); }
+  const W = weekdays(series);
+  assert.ok(W.eff[1] > 0.005, 'понеделник ' + W.eff[1]);
+  assert.ok(Math.abs(W.eff[3]) < 0.003, 'сряда ' + W.eff[3]);
+  assert.ok(weekdayShift(W, '2026-11-22', 1) > 0.005, 'неделя към понеделник');
+});
+
+test('празниците се разпознават', () => {
+  assert.equal(dayKind('2026-12-25'), 7);
+  assert.equal(dayKind('2026-11-23'), 1);
+});

@@ -131,6 +131,7 @@ def main():
             'direction': float(np.mean(np.sign(pred[moved]) == np.sign(act[moved]))),
             'direction_n': int(moved.sum()),
             'within_1ct': float(np.mean(np.abs(pred - act) <= 0.01)),
+            'q80': float(np.quantile(np.abs(pred - act), 0.8)),  # 80% от седмиците грешката е до толкова: основа за диапазона
         }
 
         # Коефициенти върху последните W седмици
