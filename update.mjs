@@ -37,7 +37,7 @@ const FUELS = [
   { code: 'lpg', name: 'Газ', src: 'BZ=F', w: 0.35, excise: 0.0939 },
 ];
 const BRAND_FUELS = ['gasoline', 'gasoline98', 'diesel', 'dieselplus'];
-const BRANDS = [{ id: 3, name: 'OMV' }, { id: 4, name: 'Rompetrol' }, { id: 1, name: 'Eko' }, { id: 39, name: 'Бенита' }];
+const BRANDS = [{ id: 3, name: 'OMV' }, { id: 4, name: 'Rompetrol' }, { id: 1, name: 'Eko' }, { id: 2, name: 'Lukoil' }, { id: 39, name: 'Бенита' }];
 const COUNTRIES = [{ code: 'gr', name: 'Гърция' }, { code: 'ro', name: 'Румъния' }, { code: 'de', name: 'Германия' }];
 const K_DEFAULT = 1 / 5, DAYS_AHEAD = 5, RESERVE = 15;
 const L_PER_GAL = 3.78541, L_PER_BBL = 158.987;

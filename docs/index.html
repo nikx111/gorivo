@@ -101,6 +101,10 @@ tr.sort-chosen td { background: var(--surface-2); }
 .exp[aria-expanded="true"] svg { transform: rotate(90deg); color: var(--accent); }
 tr.brandrow { cursor: pointer; }
 tr.brandrow td:first-child { white-space: nowrap; }
+.blogo { display: inline-grid; place-items: center; width: 92px; height: 30px; padding: 4px 8px; border-radius: 8px; background: #fff; border: 1px solid var(--line); vertical-align: middle; }
+.blogo img { max-width: 100%; max-height: 18px; display: block; }
+.blogo.text { background: var(--surface-2); font-weight: 700; font-size: 13px; color: var(--text); letter-spacing: .02em; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .exp { min-height: 28px; }
 tr.brandrow:hover td { background: var(--surface-2); }
 tr.detail td { background: var(--surface-2); padding: 16px; text-align: left; }
@@ -510,7 +514,7 @@ function renderBrands() {
   $('#brands').innerHTML = `<thead><tr><th>Марка</th>${cols.map((c) => `<th>${FUELS[c]}</th>`).join('')}</tr></thead><tbody>` +
     list.map((b) => {
       const open = openBrands.has(b.name), has = Object.keys(b.prices).length;
-      return `<tr class="brandrow" data-b="${b.name}"><td><button class="grip" data-brand="${b.name}" aria-label="Премести ${b.name}: хвани или ползвай стрелките">${GRIP}</button><button class="exp" aria-expanded="${open}" ${has ? '' : 'disabled'}>${has ? ICON.right : ''}${b.name}</button></td>${cols.map((c) => {
+      return `<tr class="brandrow" data-b="${b.name}"><td><button class="grip" data-brand="${b.name}" aria-label="Премести ${b.name}: хвани или ползвай стрелките">${GRIP}</button><button class="exp" aria-expanded="${open}" ${has ? '' : 'disabled'}>${has ? ICON.right : ''}${logo(b.name)}</button></td>${cols.map((c) => {
         const p = b.prices[c];
         if (!p) return '<td class="num" style="color:var(--faint)">няма</td>';
         return `<td class="num ${p.price === best[c] ? 'best' : ''}">${fmt(p.price)}${p.label ? `<span class="lbl">${p.label}</span>` : ''}</td>`;
@@ -520,6 +524,8 @@ function renderBrands() {
   sortBrands();
 }
 const brandRows = (b, c) => HIST.filter((r) => r[1] === b.name + ':' + c).sort((x, y) => x[0].localeCompare(y[0]));
+const LOGOS = { OMV: 'omv.svg', Lukoil: 'lukoil.svg', Rompetrol: 'rompetrol.svg' };
+const logo = (name) => (LOGOS[name] ? `<span class="blogo"><img src="logos/${LOGOS[name]}" alt="" loading="lazy"></span><span class="sr">${name}</span>` : `<span class="blogo text">${name}</span>`);
 const MIN_DAYS = 5;
 function brandDetail(b, cols) {
   const days = new Set(cols.flatMap((c) => brandRows(b, c).map((r) => r[0]))).size;
