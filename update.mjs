@@ -38,7 +38,7 @@ const FUELS = [
 ];
 const BRAND_FUELS = ['gasoline', 'gasoline98', 'diesel', 'dieselplus'];
 // only100: при Shell кодът gasoline98 във Fuelo е V-Power 95, затова за колоната А98/100 се взима направо 100-октановото
-const BRANDS = [{ id: 3, name: 'OMV' }, { id: 4, name: 'Rompetrol' }, { id: 1, name: 'Eko' }, { id: 2, name: 'Lukoil' }, { id: 5, name: 'Shell', only100: true }, { id: 39, name: 'Бенита' }];
+const BRANDS = [{ id: 3, name: 'OMV' }, { id: 4, name: 'Rompetrol' }, { id: 1, name: 'Eko' }, { id: 2, name: 'Lukoil' }, { id: 5, name: 'Shell', only100: true }];
 const COUNTRIES = [{ code: 'gr', name: 'Гърция' }, { code: 'ro', name: 'Румъния' }, { code: 'de', name: 'Германия' }];
 const K_DEFAULT = 1 / 5, DAYS_AHEAD = 5, RESERVE = 15;
 const L_PER_GAL = 3.78541, L_PER_BBL = 158.987;
@@ -58,7 +58,7 @@ const cacheFile = path.join(dataDir, 'fuelo-cache.json');
 let cache = readJson(cacheFile, {});
 if (cache.date !== TODAY) cache = { date: TODAY, r: {} };
 let remaining = Infinity, calls = 0, lastCall = 0;
-// Заявки, които връщат само стари цени (Бенита, А98 при някои марки), се питат веднъж седмично, не всеки ден
+// Заявки, които връщат само стари цени (А98 при някои марки), се питат веднъж седмично, не всеки ден
 const skipFile = path.join(dataDir, 'fuelo-skip.json'), skip = readJson(skipFile, {});
 const addDays = (d, n) => new Date(Date.parse(d + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
 function remember(p, v) {
@@ -230,7 +230,7 @@ for (const f of FUELS) {
   upsert({ date: d.date, fuel: f.code, price: d.price, min: d.min, max: d.max, cost: +pr.cost.toFixed(4), pressure: +pr.p.toFixed(4) });
 }
 
-// --- 2. Марки: OMV, Rompetrol, Eko, Бенита ---
+// --- 2. Марки: OMV, Rompetrol, Eko, Lukoil, Shell ---
 const brandNames = readJson(path.join(dataDir, 'brands-bg.json'), null) ?? await (async () => {
   const all = await fuelo('/v2/brands?country=bg');
   const keep = Object.fromEntries((all || []).filter((b) => BRANDS.some((x) => x.id === b.id)).map((b) => [b.id, b.fuel_names]));

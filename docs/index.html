@@ -621,8 +621,8 @@ function renderBrands() {
 }
 const brandRows = (b, c) => HIST.filter((r) => r[1] === b.name + ':' + c).sort((x, y) => x[0].localeCompare(y[0]));
 // Символът на марката в еднаква бяла плочка и името до него
-const LOGOS = { OMV: 'omv-mark.svg', Lukoil: 'lukoil-mark.svg', Rompetrol: 'rompetrol-mark.png', Shell: 'shell-mark.png', Eko: 'eko-mark.png', 'Бенита': 'benita-mark.png' };
-const BRAND_ID = { OMV: 3, Rompetrol: 4, Eko: 1, Lukoil: 2, Shell: 5, 'Бенита': 39 };
+const LOGOS = { OMV: 'omv-mark.svg', Lukoil: 'lukoil-mark.svg', Rompetrol: 'rompetrol-mark.png', Shell: 'shell-mark.png', Eko: 'eko-mark.png' };
+const BRAND_ID = { OMV: 3, Rompetrol: 4, Eko: 1, Lukoil: 2, Shell: 5 };
 const fueloBrand = (b) => 'https://bg.fuelo.net/brand/id/' + (b.id ?? BRAND_ID[b.name]) + '?lang=bg';
 const logo = (name) => `<span class="blogo">${LOGOS[name] ? `<img src="logos/${LOGOS[name]}" alt="" loading="lazy">` : ''}</span><span class="bname">${name}</span>`;
 const EXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
