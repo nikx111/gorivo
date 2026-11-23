@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ГРИГОРИВО: кога да заредиш</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='lg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ff9a4d'/><stop offset='1' stop-color='%23e8590c'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23lg)'/><path d='M16 5.5c-4.3 5.6-7.2 9.4-7.2 13.2a7.2 7.2 0 0 0 14.4 0c0-3.8-2.9-7.6-7.2-13.2z' fill='%23fff'/><path d='M11.9 20.6l2.7-2.6 2.1 1.6 3.4-3.5' fill='none' stroke='%23e8590c' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#e8590c">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="description" content="Кога да заредиш, за да платиш по-малко: прогноза за цените на горивата в България за следващите 5 дни">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
@@ -226,6 +230,9 @@ td.best { color: var(--down); font-weight: 700; }
 .diff.up { color: var(--up); } .diff.down { color: var(--down); }
 footer { margin-top: 36px; color: var(--faint); font-size: 12.5px; line-height: 1.6; }
 footer a { color: var(--muted); }
+.install { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.install:hover { background: var(--accent); filter: brightness(1.05); }
+.install[hidden] { display: none; }
 .theme { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 9px; width: 34px; height: 34px; cursor: pointer; display: grid; place-items: center; }
 .theme svg { width: 16px; height: 16px; }
 
@@ -264,6 +271,7 @@ footer a { color: var(--muted); }
     </div>
     <div style="display:flex;gap:12px;align-items:center">
       <div class="meta" id="meta">Зареждане…</div>
+      <button class="btn install" id="install" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Инсталирай</span></button>
       <button class="theme" id="theme" aria-label="Смяна на светла или тъмна тема"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
     </div>
   </header>
@@ -476,6 +484,18 @@ function initSections() {
   });
 }
 initSections();
+
+// Приложение: работа без интернет и бутон „Инсталирай“, който се показва само когато браузърът наистина може да инсталира
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+let installEvt = null;
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; $('#install').hidden = false; });
+$('#install').addEventListener('click', async () => {
+  if (!installEvt) return;
+  installEvt.prompt();
+  await installEvt.userChoice.catch(() => null);
+  installEvt = null; $('#install').hidden = true;
+});
+addEventListener('appinstalled', () => { $('#install').hidden = true; });
 // Подсказка „плъзни настрани“ само когато таблицата не се побира
 function hints() {
   document.querySelectorAll('.scrollhint').forEach((h) => {
