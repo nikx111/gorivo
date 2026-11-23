@@ -37,7 +37,8 @@ const FUELS = [
   { code: 'lpg', name: 'Газ', src: 'BZ=F', w: 0.35, excise: 0.0939 },
 ];
 const BRAND_FUELS = ['gasoline', 'gasoline98', 'diesel', 'dieselplus'];
-const BRANDS = [{ id: 3, name: 'OMV' }, { id: 4, name: 'Rompetrol' }, { id: 1, name: 'Eko' }, { id: 2, name: 'Lukoil' }, { id: 39, name: 'Бенита' }];
+// only100: при Shell кодът gasoline98 във Fuelo е V-Power 95, затова за колоната А98/100 се взима направо 100-октановото
+const BRANDS = [{ id: 3, name: 'OMV' }, { id: 4, name: 'Rompetrol' }, { id: 1, name: 'Eko' }, { id: 2, name: 'Lukoil' }, { id: 5, name: 'Shell', only100: true }, { id: 39, name: 'Бенита' }];
 const COUNTRIES = [{ code: 'gr', name: 'Гърция' }, { code: 'ro', name: 'Румъния' }, { code: 'de', name: 'Германия' }];
 const K_DEFAULT = 1 / 5, DAYS_AHEAD = 5, RESERVE = 15;
 const L_PER_GAL = 3.78541, L_PER_BBL = 158.987;
@@ -131,7 +132,10 @@ async function fixRoll(root, series) {
   let fixed = 0;
   for (const d of Object.keys(series)) {
     if (d < from || front[d] == null || next[d] == null) continue;
-    if (Math.abs(series[d] - next[d]) < 0.02 && Math.abs(front[d] - next[d]) >= 0.02) { series[d] = front[d]; fixed++; }
+    // Цените на договорите се свалят с няколко секунди разлика, затова не се иска пълно съвпадение:
+    // достатъчно е непрекъснатата цена да е много по-близо до следващия договор, отколкото до текущия
+    const gap = Math.abs(front[d] - next[d]);
+    if (gap >= 0.05 && Math.abs(series[d] - next[d]) < 0.25 * gap) { series[d] = front[d]; fixed++; }
   }
   return fixed;
 }
@@ -237,8 +241,9 @@ const brands = [];
 for (const b of BRANDS) {
   const prices = {};
   for (const fc of BRAND_FUELS) {
-    let d = await fuelo('/v2/brands/' + b.id + '/prices/average?fuel=' + fc), code = fc;
-    if (!fresh(d) && fc === 'gasoline98') { d = await fuelo('/v2/brands/' + b.id + '/prices/average?fuel=gasoline98plus'); code = 'gasoline98plus'; }
+    const first = b.only100 && fc === 'gasoline98' ? 'gasoline98plus' : fc;
+    let d = await fuelo('/v2/brands/' + b.id + '/prices/average?fuel=' + first), code = first;
+    if (!fresh(d) && code === 'gasoline98') { d = await fuelo('/v2/brands/' + b.id + '/prices/average?fuel=gasoline98plus'); code = 'gasoline98plus'; }
     if (!fresh(d)) continue;
     prices[fc] = { price: d.price, date: d.date, code, label: brandNames?.[b.id]?.[code] ?? null };
     upsert({ date: d.date, fuel: b.name + ':' + fc, price: d.price, min: d.min ?? d.price, max: d.max ?? d.price, cost: NaN, pressure: NaN });

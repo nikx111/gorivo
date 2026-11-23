@@ -50,7 +50,11 @@ header { display: flex; align-items: center; justify-content: space-between; gap
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
 .logo .mark { width: 34px; height: 34px; flex: none; }
 .word { font-weight: 800; font-size: 19px; letter-spacing: .06em; }
-.word .gri { color: var(--accent); }
+/* Игра на думи: ГРИГОР (оранжево) + ИВО (синьо), а линията отдолу маркира ГОРИВО */
+.word .w-gri { color: var(--accent); }
+.word .w-ivo { color: var(--c2); }
+.word .w-fuel { position: relative; display: inline-block; }
+.word .w-fuel::after { content: ''; position: absolute; left: 1px; right: .06em; bottom: -4px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--c2)); }
 .tools { display: flex; gap: 8px; align-items: center; }
 .btn { border: 1px solid var(--line); background: var(--surface); color: var(--text); font: 500 13px Inter, sans-serif; padding: 7px 12px; border-radius: 9px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .btn:hover { background: var(--surface-2); }
@@ -256,7 +260,7 @@ footer a { color: var(--muted); }
   <header>
     <div class="logo">
       <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a4d"/><stop offset="1" stop-color="#e8590c"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#lg)"/><path d="M16 5.5c-4.3 5.6-7.2 9.4-7.2 13.2a7.2 7.2 0 0 0 14.4 0c0-3.8-2.9-7.6-7.2-13.2z" fill="#fff"/><path d="M11.9 20.6l2.7-2.6 2.1 1.6 3.4-3.5" fill="none" stroke="#e8590c" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span class="word"><span class="gri">ГРИГОР</span>ИВО</span>
+      <span class="word" title="Григор + Иво = Гориво"><span class="sr">ГРИГОРИВО</span><span aria-hidden="true"><span class="w-gri">ГРИ</span><span class="w-fuel"><span class="w-gri">ГОР</span><span class="w-ivo">ИВО</span></span></span></span>
     </div>
     <div style="display:flex;gap:12px;align-items:center">
       <div class="meta" id="meta">Зареждане…</div>
@@ -376,7 +380,7 @@ footer a { color: var(--muted); }
   </main>
 
   <footer>
-    <p><b>ГРИГОРИВО</b> събира цените веднъж на ден.</p>
+    <p><b>ГРИГОРИВО</b> е игра на думи: Григор и Иво, а в средата е горивото. Цените се събират веднъж на ден.</p>
     <p><b>Как се смята оценката.</b> Моделът е изчислен върху официалните седмични цени в България от Седмичния петролен бюлетин на Европейската комисия (от 2015 г.) и борсовите цени на бензин RBOB и дизел ULSD в евро. Той описва две неща: колко от промяната на борсата стига до колонката и за колко седмици, и колко бързо цената се връща към нивото, което борсата оправдава. Коефициентите се изчисляват наново всяка седмица върху последните 3 до 4 години. Оценката за следващите дни е тази седмична промяна, разпределена по дни и приложена към днешната цена от Fuelo. После се поправя според собствените грешки на ГРИГОРИВО и според това как се движат цените в различните дни от седмицата и около празници. Диапазонът показва къде е цената в 8 от 10 случая. Това е оценка, не обещание: търговците решават сами кога и с колко да сменят цените.</p>
     <p>Източници: цени на колонката от <a href="https://fuelo.net" rel="noopener">Fuelo.net</a>, борсови цени и курсове от Yahoo Finance (фючърси BZ=F, CL=F, HO=F, RB=F). Седмични цени и данъци от <a href="https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en" rel="noopener">бюлетина на ЕК</a>; акцизът е изчислен от него (бензин 0,363 €/л, дизел 0,330 €/л). Проверки: Brent срещу ICE, курсът срещу ЕЦБ. Данните се обновяват веднъж на ден.</p>
   </footer>
