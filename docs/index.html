@@ -290,7 +290,7 @@ footer a { color: var(--muted); }
 
   <div class="ioshint card" id="ioshint" hidden>
     <span class="ioi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg></span>
-    <p><b>Сложи ГРИГОРИВО на началния екран.</b> В Safari натисни „Сподели“ долу в средата, после „Добави към началния екран“.</p>
+    <p id="ioshint-text"><b>Сложи ГРИГОРИВО на началния екран.</b> В Safari натисни „Сподели“ долу в средата, после „Добави към началния екран“.</p>
     <button class="x" id="ioshint-x" aria-label="Затвори подсказката">×</button>
   </div>
 
@@ -505,8 +505,12 @@ initSections();
 
 // Приложение: работа без интернет и бутон „Инсталирай“, който се показва само когато браузърът наистина може да инсталира
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+// Вградените браузъри (Messenger, Facebook, Instagram и др.) правят от сайта старо Android приложение,
+// което Google Play Protect блокира. Там не предлагаме инсталиране, а подсказваме първо да се отвори в Chrome или Safari.
+const UA = navigator.userAgent;
+const inApp = /FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Line\/|MicroMessenger|Snapchat|TikTok|; wv\)/i.test(UA);
 let installEvt = null;
-addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; $('#install').hidden = false; });
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); if (inApp) return; installEvt = e; $('#install').hidden = false; });
 $('#install').addEventListener('click', async () => {
   if (!installEvt) return;
   installEvt.prompt();
@@ -517,7 +521,12 @@ addEventListener('appinstalled', () => { $('#install').hidden = true; });
 // iPhone и iPad: Safari няма бутон за инсталиране, затова показваме къде е, докато приложението не е на началния екран
 const isIOS = !/Android/i.test(navigator.userAgent) && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
-if (isIOS && !standalone && !store.get('iosHintClosed')) $('#ioshint').hidden = false;
+if (inApp && !standalone) {
+  $('#ioshint-text').innerHTML = isIOS
+    ? '<b>Отвори ГРИГОРИВО в Safari, за да го сложиш на началния екран.</b> Натисни трите точки или „Сподели“ и избери „Отвори в Safari“.'
+    : '<b>Отвори ГРИГОРИВО в Chrome, за да го инсталираш.</b> Натисни трите точки горе вдясно и избери „Отвори в Chrome“. Оттук инсталирането се блокира от Google Play Protect.';
+  $('#ioshint').hidden = false;
+} else if (isIOS && !standalone && !store.get('iosHintClosed')) $('#ioshint').hidden = false;
 $('#ioshint-x').addEventListener('click', () => { $('#ioshint').hidden = true; store.set('iosHintClosed', true); });
 // Подсказка „плъзни настрани“ само когато таблицата не се побира
 function hints() {
