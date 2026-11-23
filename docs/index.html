@@ -114,9 +114,17 @@ tr.sort-chosen td { background: var(--surface-2); }
 .exp[aria-expanded="true"] svg { transform: rotate(90deg); color: var(--accent); }
 tr.brandrow { cursor: pointer; }
 tr.brandrow td:first-child { white-space: nowrap; }
-.blogo { display: inline-grid; place-items: center; width: 92px; height: 30px; padding: 4px 8px; border-radius: 8px; background: #fff; border: 1px solid var(--line); vertical-align: middle; }
-.blogo img { max-width: 100%; max-height: 18px; display: block; }
-.blogo.text { background: var(--surface-2); font-weight: 700; font-size: 13px; color: var(--text); letter-spacing: .02em; }
+.blogo { display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 4px; border-radius: 9px; background: #fff; border: 1px solid var(--line); vertical-align: middle; flex: none; box-sizing: border-box; }
+.blogo img { max-width: 100%; max-height: 100%; display: block; }
+.bname { font-weight: 600; }
+.flink { display: inline-grid; place-items: center; width: 26px; height: 26px; margin-left: 2px; border-radius: 7px; color: var(--faint); vertical-align: middle; }
+.flink:hover { color: var(--accent); background: var(--surface-2); }
+.flink:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.flink svg { width: 14px; height: 14px; }
+.allst { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+.allst a { color: var(--accent); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.allst a:hover { text-decoration: underline; }
+.allst a svg { width: 14px; height: 14px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .exp { min-height: 28px; }
 tr.brandrow:hover td { background: var(--surface-2); }
@@ -354,7 +362,7 @@ footer a { color: var(--muted); }
 
   <section data-sec="brands">
     <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="brands" aria-label="Премести блока „По бензиностанции“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>По бензиностанции</h2></div><p class="sub">Средна цена на марката в страната, € за литър. Зеленото е най-евтиното. Натисни марка за историята ѝ, хвани точките, за да я преместиш.</p></div></div>
-    <div class="card scroll"><table id="brands"></table><div class="note" id="brandnote" hidden></div></div>
+    <div class="card scroll"><table id="brands"></table><div class="note" id="brandnote" hidden></div><div class="note allst"><span>Тук са избраните марки. Цените на всички бензиностанции в страната са във Fuelo.</span><a href="https://bg.fuelo.net/gasstations?lang=bg" target="_blank" rel="noopener">Всички бензиностанции във Fuelo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a></div></div>
     <p class="scrollhint" data-for="brands">Плъзни таблицата настрани за още колони</p>
   </section>
 
@@ -602,7 +610,7 @@ function renderBrands() {
   $('#brands').innerHTML = `<thead><tr><th>Марка</th>${cols.map((c) => `<th>${FUELS[c]}</th>`).join('')}</tr></thead><tbody>` +
     list.map((b) => {
       const open = openBrands.has(b.name), has = Object.keys(b.prices).length;
-      return `<tr class="brandrow" data-b="${b.name}"><td><button class="grip" data-brand="${b.name}" aria-label="Премести ${b.name}: хвани или ползвай стрелките">${GRIP}</button><button class="exp" aria-expanded="${open}" ${has ? '' : 'disabled'}>${has ? ICON.right : ''}${logo(b.name)}</button></td>${cols.map((c) => {
+      return `<tr class="brandrow" data-b="${b.name}"><td><button class="grip" data-brand="${b.name}" aria-label="Премести ${b.name}: хвани или ползвай стрелките">${GRIP}</button><button class="exp" aria-expanded="${open}" ${has ? '' : 'disabled'}>${has ? ICON.right : ''}${logo(b.name)}</button><a class="flink" href="${fueloBrand(b)}" target="_blank" rel="noopener" aria-label="${b.name} във Fuelo (нов раздел)" title="Бензиностанциите на ${b.name} във Fuelo">${EXT}</a></td>${cols.map((c) => {
         const p = b.prices[c];
         if (!p) return '<td class="num" style="color:var(--faint)">няма</td>';
         return `<td class="num ${p.price === best[c] ? 'best' : ''}">${fmt(p.price)}${p.label ? `<span class="lbl">${p.label}</span>` : ''}</td>`;
@@ -612,8 +620,12 @@ function renderBrands() {
   sortBrands();
 }
 const brandRows = (b, c) => HIST.filter((r) => r[1] === b.name + ':' + c).sort((x, y) => x[0].localeCompare(y[0]));
-const LOGOS = { OMV: 'omv.svg', Lukoil: 'lukoil.svg', Rompetrol: 'rompetrol.svg' };
-const logo = (name) => (LOGOS[name] ? `<span class="blogo"><img src="logos/${LOGOS[name]}" alt="" loading="lazy"></span><span class="sr">${name}</span>` : `<span class="blogo text">${name}</span>`);
+// Символът на марката в еднаква бяла плочка и името до него
+const LOGOS = { OMV: 'omv-mark.svg', Lukoil: 'lukoil-mark.svg', Rompetrol: 'rompetrol-mark.png', Shell: 'shell-mark.png', Eko: 'eko-mark.png', 'Бенита': 'benita-mark.png' };
+const BRAND_ID = { OMV: 3, Rompetrol: 4, Eko: 1, Lukoil: 2, Shell: 5, 'Бенита': 39 };
+const fueloBrand = (b) => 'https://bg.fuelo.net/brand/id/' + (b.id ?? BRAND_ID[b.name]) + '?lang=bg';
+const logo = (name) => `<span class="blogo">${LOGOS[name] ? `<img src="logos/${LOGOS[name]}" alt="" loading="lazy">` : ''}</span><span class="bname">${name}</span>`;
+const EXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
 const MIN_DAYS = 5;
 function brandDetail(b, cols) {
   const days = new Set(cols.flatMap((c) => brandRows(b, c).map((r) => r[0]))).size;
@@ -648,7 +660,7 @@ function drawBrand(b, cols) {
 }
 $('#brands').addEventListener('keydown', (e) => { const g = e.target.closest('.grip'); if (g) keyMove(e, brandOrder, 'brandOrder', g.dataset.brand, 'data-brand'); });
 $('#brands').addEventListener('click', (e) => {
-  if (e.target.closest('.grip')) return;
+  if (e.target.closest('.grip') || e.target.closest('.flink')) return;
   const row = e.target.closest('tr.brandrow'); if (!row || row.querySelector('.exp').disabled) return;
   const n = row.dataset.b; openBrands.has(n) ? openBrands.delete(n) : openBrands.add(n);
   renderBrands();

@@ -248,7 +248,7 @@ for (const b of BRANDS) {
     prices[fc] = { price: d.price, date: d.date, code, label: brandNames?.[b.id]?.[code] ?? null };
     upsert({ date: d.date, fuel: b.name + ':' + fc, price: d.price, min: d.min ?? d.price, max: d.max ?? d.price, cost: NaN, pressure: NaN });
   }
-  brands.push({ name: b.name, prices });
+  brands.push({ id: b.id, name: b.name, prices });
 }
 
 // --- 3. Съседни държави (без оценка), в евро ---
