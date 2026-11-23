@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <style>
 /* ds-allow-hardcode:start */
 /* Един файл за лично табло: цветовете са токени в :root; размерите и отстъпите са тук, за да е всичко на едно място. */
@@ -52,16 +53,31 @@ header { display: flex; align-items: center; justify-content: space-between; gap
 .btn:hover { background: var(--surface-2); }
 .btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn svg { width: 14px; height: 14px; }
-.btn:focus-visible, .mv:focus-visible, .exp:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.mv { border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: inline-grid; place-items: center; }
-.mv:hover:not(:disabled) { color: var(--text); border-color: var(--faint); }
-.mv:disabled { opacity: .35; cursor: default; }
-.mv svg { width: 14px; height: 14px; }
-.moves { display: none; gap: 6px; justify-content: space-between; border-top: 1px dashed var(--line); padding-top: 10px; }
-.editing .moves { display: flex; }
-.editing .fuel { outline: 2px dashed var(--accent); outline-offset: -2px; }
-.rowmoves { display: none; gap: 4px; margin-right: 8px; }
-.editing-brands .rowmoves { display: inline-flex; }
+.exp:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fuel { position: relative; }
+.grip { all: unset; cursor: grab; color: var(--muted); width: 28px; height: 28px; display: grid; place-items: center; border-radius: 7px; touch-action: none; flex: none; }
+.grip:hover { color: var(--text); background: var(--surface-2); }
+.grip:active { cursor: grabbing; }
+.grip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.grip svg { width: 17px; height: 17px; }
+.fuel .grip { position: absolute; top: 10px; right: 10px; }
+.fuel .name { padding-right: 30px; }
+td .grip { margin: -4px 4px -4px -8px; vertical-align: middle; display: inline-grid; }
+.sort-ghost { opacity: .35; }
+.sort-chosen { box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+tr.sort-chosen td { background: var(--surface-2); }
+/* Точност и проверки */
+.acc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.acc .card { padding: 16px; }
+.acc .big { font-size: 26px; font-weight: 600; letter-spacing: -.02em; }
+.acc .row2 { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); padding: 6px 0; border-top: 1px solid var(--line); }
+.acc .row2 b { color: var(--text); font-weight: 600; }
+.checks { padding: 6px 16px; }
+.check { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.check:last-child { border-bottom: 0; }
+.check svg { width: 18px; height: 18px; margin-top: 1px; }
+.check .ok { color: var(--down); } .check .bad { color: var(--up); }
+.check small { display: block; color: var(--muted); font-size: 12.5px; }
 .exp { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
 .exp svg { width: 16px; height: 16px; color: var(--faint); transition: transform .2s; }
 .exp[aria-expanded="true"] svg { transform: rotate(90deg); color: var(--accent); }
@@ -140,6 +156,7 @@ footer a { color: var(--muted); }
 .theme svg { width: 16px; height: 16px; }
 
 /* На тесен екран таблицата се плъзга настрани; историята остава закована в видимата част */
+@media (max-width: 760px) { .acc { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .dgrid { grid-template-columns: 1fr; position: sticky; left: 0; width: calc(100vw - 66px); } }
 @media (max-width: 980px) { .fuels { grid-template-columns: repeat(3, 1fr); } .split { grid-template-columns: 1fr; } }
 @media (max-width: 640px) {
@@ -170,8 +187,7 @@ footer a { color: var(--muted); }
   </header>
 
   <section style="margin-top:4px">
-    <div class="head"><div><h2>Средни цени в България</h2><p class="sub">Днес по Fuelo и оценка за следващите три дни. Редът на горивата важи за цялата страница.</p></div>
-      <button class="btn" id="orderfuels" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg><span>Подреди</span></button></div>
+    <div class="head"><div><h2>Средни цени в България</h2><p class="sub">Днес по Fuelo и оценка за следващите три дни. Хвани точките горе вдясно, за да подредиш горивата. Редът важи за цялата страница.</p></div></div>
     <div class="fuels" id="fuels"></div>
   </section>
 
@@ -204,8 +220,7 @@ footer a { color: var(--muted); }
   </section>
 
   <section>
-    <div class="head"><div><h2>По бензиностанции</h2><p class="sub">Средна цена на марката в страната, € за литър. Зеленото е най-евтиното. Натисни марка, за да видиш историята ѝ.</p></div>
-      <button class="btn" id="orderbrands" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg><span>Подреди</span></button></div>
+    <div class="head"><div><h2>По бензиностанции</h2><p class="sub">Средна цена на марката в страната, € за литър. Зеленото е най-евтиното. Натисни марка за историята ѝ, хвани точките, за да я преместиш.</p></div></div>
     <div class="card scroll"><table id="brands"></table><div class="note" id="brandnote" hidden></div></div>
   </section>
 
@@ -232,10 +247,23 @@ footer a { color: var(--muted); }
   </section>
 
   <section>
-    <div class="head"><div><h2>Цените в България във времето</h2><p class="sub" id="histsub">Fuelo не дава история на безплатния план, затова таблото я трупа само всеки ден</p></div>
-      <div class="controls"><div class="seg" id="histfuel" role="group" aria-label="Гориво"></div></div>
+    <div class="head"><div><h2>Цените в България във времето</h2><p class="sub" id="histsub">Седмично по бюлетина на ЕК, дневно по Fuelo</p></div>
+      <div class="controls"><div class="seg" id="histfuel" role="group" aria-label="Гориво"></div><div class="seg" id="histspan" role="group" aria-label="Период"><button data-v="92">3М</button><button data-v="365" aria-pressed="true">1Г</button><button data-v="1826">5Г</button></div></div>
     </div>
     <div class="card chartbox"><div class="chartwrap" style="height:260px"><canvas id="histchart" aria-label="Графика на цените в България"></canvas></div></div>
+  </section>
+
+  <section>
+    <div class="head"><div><h2>Колко може да се вярва на оценката</h2><p class="sub" id="accsub">Проверка върху последните 2 години: всяка седмица е предсказана само с данните отпреди нея</p></div>
+      <div class="controls"><div class="seg" id="accfuel" role="group" aria-label="Гориво"><button data-v="gasoline" aria-pressed="true">А95</button><button data-v="diesel">Дизел</button><button data-v="lpg">Газ</button></div></div>
+    </div>
+    <div class="acc" id="acc"></div>
+    <div class="card chartbox" style="margin-top:12px"><div class="head" style="margin-bottom:4px"><p class="sub" style="margin:0">Промяна на цената за седмица, центове: колони е реалната, линия е оценката</p></div><div class="chartwrap" style="height:240px"><canvas id="accchart" aria-label="Реална и предсказана промяна по седмици"></canvas></div></div>
+  </section>
+
+  <section>
+    <div class="head"><div><h2>Проверки на данните</h2><p class="sub">Всяка стойност се сверява с независим източник при всяко обновяване</p></div></div>
+    <div class="card checks" id="checks"></div>
   </section>
 
   <section>
@@ -245,8 +273,8 @@ footer a { color: var(--muted); }
 
   <footer>
     <p><b>ГРИГОРИВО</b> събира цените веднъж на ден.</p>
-    <p><b>Как се смята оценката.</b> Гледа колко се е променила борсовата цена на бензина и дизела в евро за около седмица (средно за последните 3 борсови дни срещу дни от 8 до 10 назад), добавя ДДС и приема, че бензиностанциите прехвърлят промяната постепенно, за около 5 дни. Когато се съберат 20 дни данни, скоростта се изчислява от реалните промени. Газта следва Brent. Това е оценка, не обещание: търговците решават сами кога и с колко да сменят цените.</p>
-    <p>Източници: цени на колонката от <a href="https://fuelo.net" rel="noopener">Fuelo.net</a>, борсови цени и курсове от Yahoo Finance (фючърси BZ=F, CL=F, HO=F, RB=F). Акциз: бензин 0,363 €/л, дизел 0,330 €/л, газ около 0,094 €/л. Данните се обновяват веднъж на ден.</p>
+    <p><b>Как се смята оценката.</b> Моделът е изчислен върху официалните седмични цени в България от Седмичния петролен бюлетин на Европейската комисия (от 2015 г.) и борсовите цени на бензин RBOB и дизел ULSD в евро. Той описва две неща: колко от промяната на борсата стига до колонката и за колко седмици, и колко бързо цената се връща към нивото, което борсата оправдава. Коефициентите се изчисляват наново всяка седмица върху последните 3 до 4 години. Оценката за следващите дни е тази седмична промяна, разпределена по дни и приложена към днешната цена от Fuelo. Това е оценка, не обещание: търговците решават сами кога и с колко да сменят цените.</p>
+    <p>Източници: цени на колонката от <a href="https://fuelo.net" rel="noopener">Fuelo.net</a>, борсови цени и курсове от Yahoo Finance (фючърси BZ=F, CL=F, HO=F, RB=F). Седмични цени и данъци от <a href="https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en" rel="noopener">бюлетина на ЕК</a>; акцизът е изчислен от него (бензин 0,363 €/л, дизел 0,330 €/л). Проверки: Brent срещу ICE, курсът срещу ЕЦБ. Данните се обновяват веднъж на ден.</p>
   </footer>
 </div>
 
@@ -268,7 +296,7 @@ $('#theme').onclick = () => {
   const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
   document.documentElement.dataset.theme = dark ? 'light' : 'dark';
   try { localStorage.setItem('theme', document.documentElement.dataset.theme); } catch {}
-  drawOil(); drawHist(); if (L) renderBrands();
+  drawOil(); drawHist(); if (L) { renderBrands(); renderAcc(); }
 };
 
 function seg(id, onChange) {
@@ -281,20 +309,16 @@ function seg(id, onChange) {
   return () => el.querySelector('[aria-pressed="true"]').dataset.v;
 }
 
-let L, OIL, HIST, oilChart, histChart;
+let L, OIL, HIST, MODEL, oilChart, histChart;
 const chip = (d) => {
   const c = d <= -0.005 ? 'down' : d >= 0.005 ? 'up' : '';
   const t = d <= -0.005 ? '↓ ' + fmt(-d) : d >= 0.005 ? '↑ ' + fmt(d) : 'без промяна';
   return `<span class="chip ${c}">${t}</span>`;
 };
 
-// Ред на горивата и марките: избира се с „Подреди“ и се пази в браузъра
-const ICON = {
-  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
-  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
-  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>',
-  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
-};
+// Ред на горивата и марките: местят се, като се хванат точките; пази се в браузъра
+const GRIP = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg>';
+const ICON = { right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' };
 const store = { get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 let fuelOrder = [], brandOrder = [];
 const SERIES = ['--c1', '--c2', '--c3', '--c4', '--faint'];
@@ -306,25 +330,44 @@ function initOrder() {
 const fuelCols = () => fuelOrder.filter((c) => c !== 'lpg'); // марките и съседите нямат газ в таблицата
 const brandsSorted = () => brandOrder.map((n) => L.brands.find((b) => b.name === n));
 const fuelColor = (code) => css(SERIES[fuelOrder.indexOf(code)] || '--faint');
-function move(list, i, d, key) {
-  const j = i + d; if (j < 0 || j >= list.length) return;
-  [list[i], list[j]] = [list[j], list[i]];
+function setOrder(list, key, next, focusSel) {
+  list.splice(0, list.length, ...next);
   store.set(key, list);
   renderAll();
+  if (focusSel) document.querySelector(focusSel)?.focus();
+}
+// С клавиатурата: стрелките местят елемента с фокус
+function keyMove(e, list, key, item, attr) {
+  const d = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key]; if (!d) return;
+  e.preventDefault();
+  const i = list.indexOf(item), j = i + d; if (j < 0 || j >= list.length) return;
+  const next = [...list]; [next[i], next[j]] = [next[j], next[i]];
+  setOrder(list, key, next, `.grip[${attr}="${item}"]`);
+}
+function initSort() {
+  Sortable.create($('#fuels'), { handle: '.grip', animation: 180, ghostClass: 'sort-ghost', chosenClass: 'sort-chosen',
+    onEnd: () => setOrder(fuelOrder, 'fuelOrder', [...$('#fuels').children].map((c) => c.dataset.code)) });
+  $('#fuels').addEventListener('keydown', (e) => { const g = e.target.closest('.grip'); if (g) keyMove(e, fuelOrder, 'fuelOrder', g.dataset.fuel, 'data-fuel'); });
+}
+let brandSort;
+function sortBrands() {
+  brandSort?.destroy();
+  brandSort = Sortable.create($('#brands tbody'), { handle: '.grip', draggable: 'tr.brandrow', animation: 180, ghostClass: 'sort-ghost', chosenClass: 'sort-chosen',
+    onStart: () => document.querySelectorAll('#brands tr.detail').forEach((r) => (r.hidden = true)),
+    onEnd: () => setOrder(brandOrder, 'brandOrder', [...document.querySelectorAll('#brands tr.brandrow')].map((r) => r.dataset.b)) });
 }
 
 function renderFuels() {
-  $('#fuels').innerHTML = fuelOrder.map((code, i) => { const f = L.bg[code]; return `
-    <div class="card fuel">
+  $('#fuels').innerHTML = fuelOrder.map((code) => { const f = L.bg[code]; return `
+    <div class="card fuel" data-code="${code}">
+      <button class="grip" data-fuel="${code}" aria-label="Премести ${f.name}: хвани или ползвай стрелките">${GRIP}</button>
       <div class="name">${f.name}</div>
       <div class="price num">${fmt(f.price)}<small>€</small></div>
       <div class="range num">от ${fmt(f.min)} до ${fmt(f.max)} €</div>
       ${chip(f.ahead[0].price - f.price)}
       <div class="next">${f.ahead.map((a) => `<div>${wd(a.date)} ${dmy(a.date)}<b class="num">~${fmt(a.price)}</b></div>`).join('')}</div>
-      <div class="moves"><button class="mv" data-fi="${i}" data-d="-1" ${i ? '' : 'disabled'} aria-label="${f.name} наляво">${ICON.left}</button><button class="mv" data-fi="${i}" data-d="1" ${i < fuelOrder.length - 1 ? '' : 'disabled'} aria-label="${f.name} надясно">${ICON.right}</button></div>
     </div>`; }).join('');
 }
-$('#fuels').addEventListener('click', (e) => { const b = e.target.closest('.mv'); if (b) move(fuelOrder, +b.dataset.fi, +b.dataset.d, 'fuelOrder'); });
 
 const openBrands = new Set(), brandCharts = {};
 function renderBrands() {
@@ -335,15 +378,16 @@ function renderBrands() {
   const best = Object.fromEntries(cols.map((c) => [c, Math.min(...L.brands.map((b) => b.prices[c]?.price ?? Infinity))]));
   Object.values(brandCharts).forEach((c) => c.destroy());
   $('#brands').innerHTML = `<thead><tr><th>Марка</th>${cols.map((c) => `<th>${FUELS[c]}</th>`).join('')}</tr></thead><tbody>` +
-    list.map((b, i) => {
+    list.map((b) => {
       const open = openBrands.has(b.name), has = Object.keys(b.prices).length;
-      return `<tr class="brandrow" data-b="${b.name}"><td><span class="rowmoves"><button class="mv" data-bi="${i}" data-d="-1" ${i ? '' : 'disabled'} aria-label="${b.name} нагоре">${ICON.up}</button><button class="mv" data-bi="${i}" data-d="1" ${i < list.length - 1 ? '' : 'disabled'} aria-label="${b.name} надолу">${ICON.down}</button></span><button class="exp" aria-expanded="${open}" ${has ? '' : 'disabled'}>${has ? ICON.right : ''}${b.name}</button></td>${cols.map((c) => {
+      return `<tr class="brandrow" data-b="${b.name}"><td><button class="grip" data-brand="${b.name}" aria-label="Премести ${b.name}: хвани или ползвай стрелките">${GRIP}</button><button class="exp" aria-expanded="${open}" ${has ? '' : 'disabled'}>${has ? ICON.right : ''}${b.name}</button></td>${cols.map((c) => {
         const p = b.prices[c];
         if (!p) return '<td class="num" style="color:var(--faint)">няма</td>';
         return `<td class="num ${p.price === best[c] ? 'best' : ''}">${fmt(p.price)}${p.label ? `<span class="lbl">${p.label}</span>` : ''}</td>`;
       }).join('')}</tr>` + (open ? `<tr class="detail"><td colspan="${cols.length + 1}">${brandDetail(b, cols)}</td></tr>` : '');
     }).join('') + `<tr><td style="color:var(--muted)">Средно за страната</td>${cols.map((c) => `<td class="num" style="color:var(--muted)">${fmt(L.bg[c]?.price)}</td>`).join('')}</tr></tbody>`;
   list.filter((b) => openBrands.has(b.name)).forEach((b) => drawBrand(b, cols));
+  sortBrands();
 }
 const brandRows = (b, c) => HIST.filter((r) => r[1] === b.name + ':' + c).sort((x, y) => x[0].localeCompare(y[0]));
 function brandDetail(b, cols) {
@@ -367,9 +411,9 @@ function drawBrand(b, cols) {
     return { label: FUELS[c], data: dates.map((d) => m[d] ?? null), borderColor: fuelColor(c), backgroundColor: fuelColor(c), tension: .25, borderWidth: 2, pointRadius: 3, spanGaps: true };
   }) } });
 }
+$('#brands').addEventListener('keydown', (e) => { const g = e.target.closest('.grip'); if (g) keyMove(e, brandOrder, 'brandOrder', g.dataset.brand, 'data-brand'); });
 $('#brands').addEventListener('click', (e) => {
-  const mv = e.target.closest('.mv');
-  if (mv) { e.stopPropagation(); return move(brandOrder, +mv.dataset.bi, +mv.dataset.d, 'brandOrder'); }
+  if (e.target.closest('.grip')) return;
   const row = e.target.closest('tr.brandrow'); if (!row || row.querySelector('.exp').disabled) return;
   const n = row.dataset.b; openBrands.has(n) ? openBrands.delete(n) : openBrands.add(n);
   renderBrands();
@@ -403,14 +447,6 @@ function renderHistTabs() {
   $('#histfuel').innerHTML = fuelOrder.map((c) => `<button data-v="${c}" aria-pressed="${c === histFuel}">${L.bg[c].name}</button>`).join('');
 }
 function renderAll() { renderFuels(); renderBrands(); renderBars(); renderCountries(); renderHistTabs(); }
-for (const [id, cls, el] of [['#orderfuels', 'editing', '#fuels'], ['#orderbrands', 'editing-brands', '#brands']]) {
-  $(id).addEventListener('click', () => {
-    const on = $(id).getAttribute('aria-pressed') !== 'true';
-    $(id).setAttribute('aria-pressed', on);
-    $(id).querySelector('span').textContent = on ? 'Готово' : 'Подреди';
-    $(el).classList.toggle(cls, on);
-  });
-}
 
 // Борсата: дни, седмици или месеци за избран период
 const gSeries = seg('#series', drawOil), gCur = seg('#cur', drawOil), gGran = seg('#gran', drawOil), gSpan = seg('#span', drawOil);
@@ -465,36 +501,79 @@ function drawOil() {
   oilChart = new Chart(ctx, { type: 'line', data, options: baseOpts(unit) });
 }
 
-// Цените в България: натрупаната история плюс оценката
+// Цените в България: седмично по бюлетина на ЕК, дневно по Fuelo, пунктир за оценката
 let histFuel = 'diesel';
+const gHistSpan = seg('#histspan', () => drawHist());
+const WEEKLY_OF = { gasoline: 'gasoline', diesel: 'diesel', lpg: 'lpg' };
 function drawHist() {
   if (!HIST) return;
-  const rows = HIST.filter((r) => r[1] === histFuel).sort((a, b) => a[0].localeCompare(b[0]));
-  const f = L.bg[histFuel], acc = css('--accent'), mut = css('--faint');
-  const labels = [...rows.map((r) => r[0]), ...(f ? f.ahead.map((a) => a.date) : [])];
-  const real = [...rows.map((r) => r[2]), ...(f ? f.ahead.map(() => null) : [])];
-  const est = labels.map((d, i) => (i === rows.length - 1 ? rows.at(-1)[2] : f?.ahead.find((a) => a.date === d)?.price ?? null));
-  const days = rows.length;
-  $('#histsub').textContent = days < 7 ? 'Fuelo не дава история на безплатния план, затова таблото я трупа всеки ден. Събрани дни: ' + days + '. Пунктирът е оценката.' : 'Средна цена в България, € за литър. Пунктирът е оценката за следващите дни.';
+  const from = new Date(Date.now() - gHistSpan() * 864e5).toISOString().slice(0, 10);
+  const weekly = (MODEL?.fuels?.[WEEKLY_OF[histFuel]]?.weekly || []).filter((r) => r[0] >= from);
+  const daily = HIST.filter((r) => r[1] === histFuel && r[0] >= from).sort((a, b) => a[0].localeCompare(b[0]));
+  const f = L.bg[histFuel], acc = css('--accent'), mut = css('--faint'), blue = css('--c2');
+  const dates = [...new Set([...weekly.map((r) => r[0]), ...daily.map((r) => r[0]), ...(f ? [f.date, ...f.ahead.map((a) => a.date)] : [])])].sort();
+  const wm = Object.fromEntries(weekly), dm = Object.fromEntries(daily.map((r) => [r[0], r[2]]));
+  const fm = f ? Object.fromEntries([[f.date, f.price], ...f.ahead.map((a) => [a.date, a.price])]) : {};
+  $('#histsub').textContent = (weekly.length ? 'Седмично по бюлетина на ЕК (синьо), ' : '') + 'дневно по Fuelo (оранжево, трупа се от 23.11.2026), пунктир за оценката. € за литър.';
   const opts = baseOpts('литър');
-  opts.plugins.tooltip.callbacks.label = (c) => c.parsed.y == null ? '' : (c.datasetIndex ? 'Оценка ' : '') + fmt(c.parsed.y, 2) + ' €';
+  opts.plugins.tooltip.displayColors = true;
+  opts.plugins.tooltip.callbacks.label = (c) => c.parsed.y == null ? '' : ' ' + c.dataset.label + ': ' + fmt(c.parsed.y, 3) + ' €';
   opts.scales.y.ticks.callback = (v) => fmt(v, 2);
   if (histChart) histChart.destroy();
-  histChart = new Chart($('#histchart'), { type: 'line', options: opts, data: { labels: labels.map(dmy), datasets: [
-    { data: real, borderColor: acc, backgroundColor: acc, tension: .25, borderWidth: 2, pointRadius: 3 },
-    { data: est, borderColor: mut, borderDash: [5, 5], tension: .25, borderWidth: 2, pointRadius: 3, pointBackgroundColor: mut, spanGaps: true },
+  histChart = new Chart($('#histchart'), { type: 'line', options: opts, data: { labels: dates.map((d) => (gHistSpan() > 400 ? d.slice(2, 7).split('-').reverse().join('.') : dmy(d))), datasets: [
+    { label: 'ЕК, седмично', data: dates.map((d) => wm[d] ?? null), borderColor: blue, backgroundColor: blue, tension: .25, borderWidth: 2, pointRadius: 0, spanGaps: true },
+    { label: 'Fuelo', data: dates.map((d) => dm[d] ?? null), borderColor: acc, backgroundColor: acc, borderWidth: 2, pointRadius: 3, spanGaps: true },
+    { label: 'Оценка', data: dates.map((d) => fm[d] ?? null), borderColor: mut, backgroundColor: mut, borderDash: [5, 5], borderWidth: 2, pointRadius: 3, spanGaps: true },
   ] } });
 }
 
-Promise.all(['latest', 'oil', 'history'].map((f) => fetch('data/' + f + '.json?' + Date.now()).then((r) => r.json()))).then(([l, o, h]) => {
-  L = l; OIL = o; HIST = h;
+// Точност: проверката върху 2 години и реалните прогнози
+let accFuel = 'gasoline', accChart;
+seg('#accfuel', (v) => { accFuel = v; renderAcc(); });
+function renderAcc() {
+  if (!MODEL) { $('#acc').innerHTML = '<div class="card">Моделът не е наличен днес, оценката е по простото правило.</div>'; return; }
+  const m = MODEL.fuels[accFuel], c = m.check, ct = (x) => fmt(x * 100, 2) + ' ст.';
+  const lv = L.live;
+  $('#acc').innerHTML = `
+    <div class="card"><div class="sub">Средна грешка за седмица</div><div class="big num">±${ct(c.mae)}</div>
+      <div class="row2"><span>Ако приемем „няма промяна“</span><b class="num">±${ct(c.naive_mae)}</b></div>
+      <div class="row2"><span>Грешка до 1 цент</span><b class="num">${Math.round(c.within_1ct * 100)}% от седмиците</b></div></div>
+    <div class="card"><div class="sub">Позната посока</div><div class="big num">${Math.round(c.direction * 100)}%</div>
+      <div class="row2"><span>Седмици с промяна над 0,5 ст.</span><b class="num">${c.direction_n}</b></div>
+      <div class="row2"><span>Проверени седмици</span><b class="num">${c.weeks}</b></div></div>
+    <div class="card"><div class="sub">Реални прогнози за утре</div>${lv && lv.n ? `<div class="big num">±${ct(lv.mae)}</div>
+      <div class="row2"><span>Проверени дни</span><b class="num">${lv.n}</b></div>
+      <div class="row2"><span>Позната посока</span><b class="num">${lv.direction == null ? 'няма промени' : Math.round(lv.direction * 100) + '%'}</b></div>`
+      : `<div class="big" style="font-size:18px;margin-top:6px">Започват от ${dmy(lv?.since || L.date)}</div><div class="row2"><span>Всяка прогноза се записва и се сравнява с реалната цена, когато денят дойде.</span></div>`}</div>`;
+  $('#accsub').textContent = 'Проверка върху ' + c.weeks + ' седмици до ' + dmy(MODEL.bulletin_date) + '.' + MODEL.bulletin_date.slice(2, 4) + ': всяка седмица е предсказана само с данните отпреди нея. Борсов ориентир: ' + { 'RB=F': 'бензин RBOB', 'HO=F': 'дизел ULSD', 'BZ=F': 'Brent' }[m.driver] + '.';
+  const bt = m.backtest.slice(-52), up = css('--up'), down = css('--down');
+  const opts = baseOpts('литър');
+  opts.plugins.tooltip.displayColors = true;
+  opts.plugins.tooltip.callbacks.label = (c2) => ' ' + c2.dataset.label + ': ' + (c2.parsed.y > 0 ? '+' : '') + fmt(c2.parsed.y, 1) + ' ст.';
+  opts.scales.y.ticks.callback = (v) => fmt(v, 0);
+  if (accChart) accChart.destroy();
+  accChart = new Chart($('#accchart'), { data: { labels: bt.map((r) => dmy(r[0])), datasets: [
+    { type: 'bar', label: 'Реално', data: bt.map((r) => r[1] * 100), backgroundColor: bt.map((r) => (r[1] > 0 ? up : down) + '99'), borderRadius: 3 },
+    { type: 'line', label: 'Оценка', data: bt.map((r) => r[2] * 100), borderColor: css('--text'), backgroundColor: css('--text'), borderWidth: 1.5, pointRadius: 2, tension: .2 },
+  ] }, options: opts });
+}
+
+const OKI = '<svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-label="Наред"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg>';
+const BADI = '<svg class="bad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-label="Внимание"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.01"/></svg>';
+function renderChecks() {
+  const c = L.checks || [];
+  $('#checks').innerHTML = c.length ? c.map((x) => `<div class="check">${x.ok ? OKI : BADI}<div>${x.name}<small class="num">${x.detail}</small></div></div>`).join('') : '<div class="check"><div></div><div>Няма проверки в тези данни</div></div>';
+}
+
+Promise.all(['latest', 'oil', 'history', 'model'].map((f) => fetch('data/' + f + '.json?' + Date.now()).then((r) => (r.ok ? r.json() : null)))).then(([l, o, h, m]) => {
+  L = l; OIL = o; HIST = h; MODEL = m;
   const up = new Date(L.updated);
   $('#meta').innerHTML = 'Обновено ' + up.toLocaleString('bg-BG', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Sofia' }) +
     (L.bno ? `<br>BNO (Brent фонд) <span class="num">${fmt(L.bno.price)} $ ${pct(L.bno.change)}</span>` : '');
-  initOrder(); renderAll();
+  initOrder(); renderAll(); initSort(); renderChecks();
   seg('#histfuel', (v) => { histFuel = v; drawHist(); });
   // Графиките се чертаят след шрифтовете, иначе подписите на осите се мерят с резервния шрифт и се изрязват
-  document.fonts.ready.then(() => { drawOil(); drawHist(); });
+  document.fonts.ready.then(() => { drawOil(); drawHist(); renderAcc(); });
 }).catch((e) => { $('#meta').textContent = 'Данните не се заредиха: ' + e.message; });
 /* ds-allow-hardcode:end */
 </script>
