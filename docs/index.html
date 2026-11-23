@@ -18,6 +18,7 @@
   --text: #14171c; --muted: #5d6573; --faint: #8b93a1;
   --accent: #e8590c; --accent-soft: #fff1e8;
   --up: #c92a2a; --down: #2b8a3e; --flat: #5d6573;
+  --up-soft: #fdecec; --down-soft: #e9f6ec;
   --c1: #e8590c; --c2: #1971c2; --c3: #7048e8; --c4: #0c8599;
   --shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
   --radius: 14px;
@@ -28,6 +29,7 @@
     --text: #e9edf2; --muted: #9aa4b2; --faint: #6b7584;
     --accent: #ff8a3d; --accent-soft: #2a1a10;
     --up: #ff6b6b; --down: #51cf66; --flat: #9aa4b2;
+    --up-soft: #3a1d1f; --down-soft: #16301d;
     --c1: #ff8a3d; --c2: #4dabf7; --c3: #9775fa; --c4: #3bc9db;
     --shadow: none;
   }
@@ -37,6 +39,7 @@
   --text: #e9edf2; --muted: #9aa4b2; --faint: #6b7584;
   --accent: #ff8a3d; --accent-soft: #2a1a10;
   --up: #ff6b6b; --down: #51cf66; --flat: #9aa4b2;
+  --up-soft: #3a1d1f; --down-soft: #16301d;
   --c1: #ff8a3d; --c2: #4dabf7; --c3: #9775fa; --c4: #3bc9db;
   --shadow: none;
 }
@@ -62,8 +65,22 @@ header { display: flex; align-items: center; justify-content: space-between; gap
 .grip svg { width: 17px; height: 17px; }
 .fuel .grip { position: absolute; top: 10px; right: 10px; }
 .fuel .name { padding-right: 30px; }
+.today { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.today .lbl2 { font-size: 12px; color: var(--faint); }
+.tmr { border-radius: 10px; padding: 9px 11px; background: var(--surface-2); display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.tmr span { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.tmr b { font-size: 18px; font-weight: 600; }
+.tmr em { font-style: normal; font-size: 13px; font-weight: 600; color: var(--flat); margin-left: auto; }
+.tmr.down { background: var(--down-soft); } .tmr.down em { color: var(--down); }
+.tmr.up { background: var(--up-soft); } .tmr.up em { color: var(--up); }
+.trend { font-size: 13px; color: var(--text); }
+.trend.down b { color: var(--down); } .trend.up b { color: var(--up); }
+.days { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border-top: 1px solid var(--line); padding-top: 9px; }
+.days div { font-size: 11.5px; color: var(--muted); }
+.days b { display: block; font-size: 13.5px; color: var(--text); font-weight: 600; }
 td .grip { margin: -4px 4px -4px -8px; vertical-align: middle; display: inline-grid; }
 .sort-ghost { opacity: .35; }
+.sortable-fallback { opacity: .9 !important; box-shadow: 0 12px 32px rgba(0,0,0,.22); border-radius: var(--radius); background: var(--surface); }
 .sort-chosen { box-shadow: 0 8px 24px rgba(0,0,0,.18); }
 tr.sort-chosen td { background: var(--surface-2); }
 /* Точност и проверки */
@@ -97,6 +114,10 @@ tr.detail td { background: var(--surface-2); padding: 16px; text-align: left; }
 h2 { font-size: 17px; margin: 0; letter-spacing: -.01em; }
 .sub { color: var(--muted); font-size: 13px; margin: 2px 0 0; }
 section { margin-top: 28px; }
+#sections > section:first-child { margin-top: 4px; }
+.titlerow { display: flex; align-items: center; gap: 4px; margin-left: -6px; }
+section.sort-chosen { box-shadow: none; }
+section.sort-ghost { opacity: .4; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
 .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
 
@@ -186,14 +207,15 @@ footer a { color: var(--muted); }
     </div>
   </header>
 
-  <section style="margin-top:4px">
-    <div class="head"><div><h2>Средни цени в България</h2><p class="sub">Днес по Fuelo и оценка за следващите три дни. Хвани точките горе вдясно, за да подредиш горивата. Редът важи за цялата страница.</p></div></div>
+  <main id="sections">
+  <section data-sec="prices">
+    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="prices" aria-label="Премести блока „Средни цени в България“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Средни цени в България</h2></div><p class="sub">Днешната средна цена в страната по Fuelo и какво очакваме за следващите три дни. Обикновено оценката греши с 1 до 1,5 цента за седмица. Хвани точките горе вдясно, за да подредиш горивата.</p></div></div>
     <div class="fuels" id="fuels"></div>
   </section>
 
-  <section>
+  <section data-sec="oil">
     <div class="head">
-      <div><h2>Петролът на борсата</h2><p class="sub" id="oilsub">Цената на суровината, от която тръгва цената на колонката</p></div>
+      <div><div class="titlerow"><button class="grip secgrip" data-sec="oil" aria-label="Премести блока „Петролът на борсата“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Петролът на борсата</h2></div><p class="sub" id="oilsub">Цената на суровината, от която тръгва цената на колонката</p></div>
       <div class="controls">
         <div class="seg" id="series" role="group" aria-label="Какво да се покаже">
           <button data-v="brent" aria-pressed="true">Brent</button><button data-v="wti">WTI</button><button data-v="diesel">Дизел</button><button data-v="gasoline">Бензин</button>
@@ -219,13 +241,13 @@ footer a { color: var(--muted); }
     </div>
   </section>
 
-  <section>
-    <div class="head"><div><h2>По бензиностанции</h2><p class="sub">Средна цена на марката в страната, € за литър. Зеленото е най-евтиното. Натисни марка за историята ѝ, хвани точките, за да я преместиш.</p></div></div>
+  <section data-sec="brands">
+    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="brands" aria-label="Премести блока „По бензиностанции“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>По бензиностанции</h2></div><p class="sub">Средна цена на марката в страната, € за литър. Зеленото е най-евтиното. Натисни марка за историята ѝ, хвани точките, за да я преместиш.</p></div></div>
     <div class="card scroll"><table id="brands"></table><div class="note" id="brandnote" hidden></div></div>
   </section>
 
-  <section>
-    <div class="head"><div><h2>От какво се състои цената</h2><p class="sub">Ориентировъчно, € за литър</p></div></div>
+  <section data-sec="parts">
+    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="parts" aria-label="Премести блока „От какво се състои цената“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>От какво се състои цената</h2></div><p class="sub">Ориентировъчно, € за литър</p></div></div>
     <div class="split">
       <div class="card">
         <div class="bars" id="bars"></div>
@@ -246,30 +268,32 @@ footer a { color: var(--muted); }
     </div>
   </section>
 
-  <section>
-    <div class="head"><div><h2>Цените в България във времето</h2><p class="sub" id="histsub">Седмично по бюлетина на ЕК, дневно по Fuelo</p></div>
+  <section data-sec="history">
+    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="history" aria-label="Премести блока „Цените в България във времето“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Цените в България във времето</h2></div><p class="sub" id="histsub">Седмично по бюлетина на ЕК, дневно по Fuelo</p></div>
       <div class="controls"><div class="seg" id="histfuel" role="group" aria-label="Гориво"></div><div class="seg" id="histspan" role="group" aria-label="Период"><button data-v="92">3М</button><button data-v="365" aria-pressed="true">1Г</button><button data-v="1826">5Г</button></div></div>
     </div>
     <div class="card chartbox"><div class="chartwrap" style="height:260px"><canvas id="histchart" aria-label="Графика на цените в България"></canvas></div></div>
   </section>
 
-  <section>
-    <div class="head"><div><h2>Колко може да се вярва на оценката</h2><p class="sub" id="accsub">Проверка върху последните 2 години: всяка седмица е предсказана само с данните отпреди нея</p></div>
+  <section data-sec="accuracy">
+    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="accuracy" aria-label="Премести блока „Колко може да се вярва на оценката“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Колко може да се вярва на оценката</h2></div><p class="sub" id="accsub">Проверка върху последните 2 години: всяка седмица е предсказана само с данните отпреди нея</p></div>
       <div class="controls"><div class="seg" id="accfuel" role="group" aria-label="Гориво"><button data-v="gasoline" aria-pressed="true">А95</button><button data-v="diesel">Дизел</button><button data-v="lpg">Газ</button></div></div>
     </div>
     <div class="acc" id="acc"></div>
     <div class="card chartbox" style="margin-top:12px"><div class="head" style="margin-bottom:4px"><p class="sub" style="margin:0">Промяна на цената за седмица, центове: колони е реалната, линия е оценката</p></div><div class="chartwrap" style="height:240px"><canvas id="accchart" aria-label="Реална и предсказана промяна по седмици"></canvas></div></div>
   </section>
 
-  <section>
-    <div class="head"><div><h2>Проверки на данните</h2><p class="sub">Всяка стойност се сверява с независим източник при всяко обновяване</p></div></div>
+  <section data-sec="checks">
+    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="checks" aria-label="Премести блока „Проверки на данните“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Проверки на данните</h2></div><p class="sub">Всяка стойност се сверява с независим източник при всяко обновяване</p></div></div>
     <div class="card checks" id="checks"></div>
   </section>
 
-  <section>
-    <div class="head"><div><h2>Съседите и Германия</h2><p class="sub">Средни цени днес, € за литър. Процентът е спрямо България.</p></div></div>
+  <section data-sec="countries">
+    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="countries" aria-label="Премести блока „Съседите и Германия“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Съседите и Германия</h2></div><p class="sub">Средни цени днес, € за литър. Процентът е спрямо България.</p></div></div>
     <div class="card scroll"><table id="countries"></table></div>
   </section>
+
+  </main>
 
   <footer>
     <p><b>ГРИГОРИВО</b> събира цените веднъж на ден.</p>
@@ -345,27 +369,56 @@ function keyMove(e, list, key, item, attr) {
   setOrder(list, key, next, `.grip[${attr}="${item}"]`);
 }
 function initSort() {
-  Sortable.create($('#fuels'), { handle: '.grip', animation: 180, ghostClass: 'sort-ghost', chosenClass: 'sort-chosen',
+  Sortable.create($('#fuels'), { handle: '.grip', animation: 180, ghostClass: 'sort-ghost', chosenClass: 'sort-chosen', forceFallback: true, fallbackOnBody: true, scrollSensitivity: 120,
     onEnd: () => setOrder(fuelOrder, 'fuelOrder', [...$('#fuels').children].map((c) => c.dataset.code)) });
   $('#fuels').addEventListener('keydown', (e) => { const g = e.target.closest('.grip'); if (g) keyMove(e, fuelOrder, 'fuelOrder', g.dataset.fuel, 'data-fuel'); });
 }
+// Блоковете на страницата: също се местят за точките до заглавието
+function initSections() {
+  const box = $('#sections'), all = [...box.children].map((s) => s.dataset.sec);
+  const saved = (store.get('sectionOrder') || []).filter((x) => all.includes(x));
+  [...saved, ...all.filter((x) => !saved.includes(x))].forEach((id) => box.appendChild(box.querySelector(`section[data-sec="${id}"]`)));
+  const save = () => store.set('sectionOrder', [...box.children].map((s) => s.dataset.sec));
+  Sortable.create(box, { handle: '.secgrip', animation: 200, ghostClass: 'sort-ghost', chosenClass: 'sort-chosen', forceFallback: true, fallbackOnBody: true, scrollSensitivity: 120, onEnd: save });
+  box.addEventListener('keydown', (e) => {
+    const g = e.target.closest('.secgrip'); if (!g) return;
+    const d = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[e.key]; if (!d) return;
+    e.preventDefault();
+    const sec = g.closest('section'), other = d < 0 ? sec.previousElementSibling : sec.nextElementSibling;
+    if (!other) return;
+    d < 0 ? box.insertBefore(sec, other) : box.insertBefore(other, sec);
+    save(); g.focus(); sec.scrollIntoView({ block: 'nearest' });
+  });
+}
+initSections();
+
 let brandSort;
 function sortBrands() {
   brandSort?.destroy();
-  brandSort = Sortable.create($('#brands tbody'), { handle: '.grip', draggable: 'tr.brandrow', animation: 180, ghostClass: 'sort-ghost', chosenClass: 'sort-chosen',
+  brandSort = Sortable.create($('#brands tbody'), { handle: '.grip', draggable: 'tr.brandrow', animation: 180, ghostClass: 'sort-ghost', chosenClass: 'sort-chosen', forceFallback: true, fallbackOnBody: true, scrollSensitivity: 120,
     onStart: () => document.querySelectorAll('#brands tr.detail').forEach((r) => (r.hidden = true)),
     onEnd: () => setOrder(brandOrder, 'brandOrder', [...document.querySelectorAll('#brands tr.brandrow')].map((r) => r.dataset.b)) });
 }
 
+// Колко цента е промяната, с думи
+const cents = (d) => { const c = Math.round(Math.abs(d) * 100); return c ? c + ' ст.' : 'под 1 ст.'; };
+const dir = (d) => (d <= -0.005 ? 'down' : d >= 0.005 ? 'up' : 'flat');
+const WDL = ['неделя', 'понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота'];
 function renderFuels() {
-  $('#fuels').innerHTML = fuelOrder.map((code) => { const f = L.bg[code]; return `
+  $('#fuels').innerHTML = fuelOrder.map((code) => {
+    const f = L.bg[code], t = f.ahead[0], last = f.ahead.at(-1), d1 = t.price - f.price, d3 = last.price - f.price;
+    const lastDay = WDL[new Date(last.date + 'T12:00:00').getDay()];
+    const trend = dir(d3) === 'flat' ? `До ${lastDay}: <b>без съществена промяна</b>`
+      : `До ${lastDay}: <b>${d3 < 0 ? 'поевтинява' : 'поскъпва'} с около ${cents(d3)}</b>`;
+    return `
     <div class="card fuel" data-code="${code}">
       <button class="grip" data-fuel="${code}" aria-label="Премести ${f.name}: хвани или ползвай стрелките">${GRIP}</button>
       <div class="name">${f.name}</div>
-      <div class="price num">${fmt(f.price)}<small>€</small></div>
-      <div class="range num">от ${fmt(f.min)} до ${fmt(f.max)} €</div>
-      ${chip(f.ahead[0].price - f.price)}
-      <div class="next">${f.ahead.map((a) => `<div>${wd(a.date)} ${dmy(a.date)}<b class="num">~${fmt(a.price)}</b></div>`).join('')}</div>
+      <div class="today"><span class="price num">${fmt(f.price)}<small>€</small></span><span class="lbl2">днес, средно</span></div>
+      <div class="tmr ${dir(d1)}"><span>Утре</span><b class="num">~${fmt(t.price)} €</b><em>${dir(d1) === 'flat' ? 'същото' : (d1 < 0 ? '↓ ' : '↑ ') + cents(d1)}</em></div>
+      <div class="trend ${dir(d3)}">${trend}</div>
+      <div class="days">${f.ahead.map((a) => `<div>${wd(a.date)} ${dmy(a.date)}<b class="num">~${fmt(a.price)}</b></div>`).join('')}</div>
+      <div class="range num">В страната от ${fmt(f.min)} до ${fmt(f.max)} €</div>
     </div>`; }).join('');
 }
 
