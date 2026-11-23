@@ -56,9 +56,19 @@ const cacheFile = path.join(dataDir, 'fuelo-cache.json');
 let cache = readJson(cacheFile, {});
 if (cache.date !== TODAY) cache = { date: TODAY, r: {} };
 let remaining = Infinity, calls = 0, lastCall = 0;
+// Заявки, които връщат само стари цени (Бенита, А98 при някои марки), се питат веднъж седмично, не всеки ден
+const skipFile = path.join(dataDir, 'fuelo-skip.json'), skip = readJson(skipFile, {});
+const addDays = (d, n) => new Date(Date.parse(d + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+function remember(p, v) {
+  if (fresh(v)) delete skip[p]; else skip[p] = addDays(TODAY, 7);
+  writeJson(skipFile, skip);
+  return v;
+}
+const MAX_CALLS = 45; // таван за едно пускане, за да остане място в дневния лимит от 100
 async function fuelo(p) {
-  if (p in cache.r) return cache.r[p];
-  if (remaining < RESERVE) return null;
+  if (p in cache.r) return remember(p, cache.r[p]);
+  if (skip[p] && skip[p] > TODAY) return null;
+  if (remaining < RESERVE || calls >= MAX_CALLS) return null;
   const wait = lastCall + 12500 - Date.now(); // 5 заявки в минута
   if (wait > 0) await new Promise((ok) => setTimeout(ok, wait));
   lastCall = Date.now();
@@ -76,7 +86,7 @@ async function fuelo(p) {
   const v = r.ok ? (await r.json()).data : null; // 404 no_data: няма такова гориво
   cache.r[p] = v;
   writeJson(cacheFile, cache);
-  return v;
+  return remember(p, v);
 }
 
 // --- Борсови цени от Yahoo (без ключ); при грешка остават последните записани ---
