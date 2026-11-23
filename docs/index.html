@@ -99,6 +99,8 @@ tr.sort-chosen td { background: var(--surface-2); }
 .exp svg { width: 16px; height: 16px; color: var(--faint); transition: transform .2s; }
 .exp[aria-expanded="true"] svg { transform: rotate(90deg); color: var(--accent); }
 tr.brandrow { cursor: pointer; }
+tr.brandrow td:first-child { white-space: nowrap; }
+.exp { min-height: 28px; }
 tr.brandrow:hover td { background: var(--surface-2); }
 tr.detail td { background: var(--surface-2); padding: 16px; text-align: left; }
 .dgrid { display: grid; grid-template-columns: 1fr 220px; gap: 16px; align-items: start; }
@@ -156,6 +158,9 @@ td .lbl { display: block; font-size: 11px; color: var(--faint); font-family: Int
 td.best { color: var(--down); font-weight: 700; }
 .brand { font-weight: 600; }
 .scroll { overflow-x: auto; }
+.scrollhint { display: none; font-size: 12px; color: var(--faint); margin: 6px 2px 0; }
+@media (max-width: 640px) { .scrollhint { display: block; } }
+.scrollhint[hidden] { display: none !important; }
 
 /* Разбивка */
 .split { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; }
@@ -188,7 +193,14 @@ footer a { color: var(--muted); }
   .next b { font-size: 12px; }
   .next div { font-size: 11px; }
   .chartwrap { height: 260px; }
-  th, td { padding: 10px 10px; }
+  th, td { padding: 10px 6px; font-size: 13.5px; }
+  thead th { font-size: 10.5px; letter-spacing: .02em; }
+  td .lbl { font-size: 10px; line-height: 1.25; white-space: normal; }
+  td:first-child, th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); padding-left: 10px; }
+  tr.brandrow:hover td:first-child { background: var(--surface-2); }
+  tr.detail td:first-child { position: static; background: var(--surface-2); }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; width: 100%; }
+  .stats b { font-size: 18px; }
   header { padding-top: 16px; }
 }
 /* ds-allow-hardcode:end */
@@ -244,6 +256,7 @@ footer a { color: var(--muted); }
   <section data-sec="brands">
     <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="brands" aria-label="Премести блока „По бензиностанции“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>По бензиностанции</h2></div><p class="sub">Средна цена на марката в страната, € за литър. Зеленото е най-евтиното. Натисни марка за историята ѝ, хвани точките, за да я преместиш.</p></div></div>
     <div class="card scroll"><table id="brands"></table><div class="note" id="brandnote" hidden></div></div>
+    <p class="scrollhint" data-for="brands">Плъзни таблицата настрани за още колони</p>
   </section>
 
   <section data-sec="parts">
@@ -291,6 +304,7 @@ footer a { color: var(--muted); }
   <section data-sec="countries">
     <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="countries" aria-label="Премести блока „Съседите и Германия“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Съседите и Германия</h2></div><p class="sub">Средни цени днес, € за литър. Процентът е спрямо България.</p></div></div>
     <div class="card scroll"><table id="countries"></table></div>
+    <p class="scrollhint" data-for="countries">Плъзни таблицата настрани за още колони</p>
   </section>
 
   </main>
@@ -391,6 +405,15 @@ function initSections() {
   });
 }
 initSections();
+// Подсказка „плъзни настрани“ само когато таблицата не се побира
+function hints() {
+  document.querySelectorAll('.scrollhint').forEach((h) => {
+    const box = document.getElementById(h.dataset.for).parentElement;
+    h.hidden = box.scrollWidth <= box.clientWidth + 2 || box.scrollLeft + box.clientWidth >= box.scrollWidth - 2;
+    box.onscroll = () => (h.hidden = box.scrollLeft + box.clientWidth >= box.scrollWidth - 2);
+  });
+}
+addEventListener('resize', hints);
 
 let brandSort;
 function sortBrands() {
@@ -623,7 +646,7 @@ Promise.all(['latest', 'oil', 'history', 'model'].map((f) => fetch('data/' + f +
   const up = new Date(L.updated);
   $('#meta').innerHTML = 'Обновено ' + up.toLocaleString('bg-BG', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Sofia' }) +
     (L.bno ? `<br>BNO (Brent фонд) <span class="num">${fmt(L.bno.price)} $ ${pct(L.bno.change)}</span>` : '');
-  initOrder(); renderAll(); initSort(); renderChecks();
+  initOrder(); renderAll(); initSort(); renderChecks(); hints();
   seg('#histfuel', (v) => { histFuel = v; drawHist(); });
   // Графиките се чертаят след шрифтовете, иначе подписите на осите се мерят с резервния шрифт и се изрязват
   document.fonts.ready.then(() => { drawOil(); drawHist(); renderAcc(); });
