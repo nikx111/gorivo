@@ -825,12 +825,12 @@ function renderAcc() {
   const m = MODEL.fuels[accFuel], c = m.check, ct = (x) => fmt(x * 100, 2) + ' ст.';
   const lv = L.live;
   $('#acc').innerHTML = `
-    <div class="card"><div class="sub">Средна грешка за седмица</div><div class="big num">±${ct(c.mae)}</div>
-      <div class="row2"><span>Ако приемем „няма промяна“</span><b class="num">±${ct(c.naive_mae)}</b></div>
-      <div class="row2"><span>Грешка до 1 цент</span><b class="num">${Math.round(c.within_1ct * 100)}% от седмиците</b></div></div>
-    <div class="card"><div class="sub">Позната посока</div><div class="big num">${Math.round(c.direction * 100)}%</div>
-      <div class="row2"><span>Седмици с промяна над 0,5 ст.</span><b class="num">${c.direction_n}</b></div>
-      <div class="row2"><span>Проверени седмици</span><b class="num">${c.weeks}</b></div></div>
+    <div class="card"><div class="sub">Позната посока при истинска промяна</div><div class="big num">${c.big_direction == null ? 'няма' : Math.round(c.big_direction * 100) + '%'}</div>
+      <div class="row2"><span>Седмици с промяна над 2 цента</span><b class="num">${c.big_n}</b></div>
+      <div class="row2"><span>Казва дали ще поскъпне или поевтинее, точно това, от което зависи съветът кога да заредиш.</span></div></div>
+    <div class="card"><div class="sub">По-точно от „няма промяна“</div><div class="big num">${(() => { const g = Math.round((1 - c.mae / c.naive_mae) * 100); return g >= 8 ? 'с ' + g + '%' : 'почти колкото'; })()}</div>
+      <div class="row2"><span>Средна грешка за седмица</span><b class="num">±${ct(c.mae)}</b></div>
+      <div class="row2"><span>Ако приемем, че цената няма да се промени</span><b class="num">±${ct(c.naive_mae)}</b></div></div>
     <div class="card"><div class="sub">Реални прогнози за утре</div>${lv && lv.n ? `<div class="big num">±${ct(lv.mae)}</div>
       <div class="row2"><span>Проверени прогнози</span><b class="num">${lv.n}</b></div>
       <div class="row2"><span>Без поправките щеше да е</span><b class="num">±${ct(lv.maeRaw)}</b></div>

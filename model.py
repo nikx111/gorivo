@@ -132,6 +132,10 @@ def main():
             'direction_n': int(moved.sum()),
             'within_1ct': float(np.mean(np.abs(pred - act) <= 0.01)),
             'q80': float(np.quantile(np.abs(pred - act), 0.8)),  # 80% от седмиците грешката е до толкова: основа за диапазона
+            # Истинска промяна: седмици, в които цената се е сменила с поне 2 цента. Там посоката има значение за съвета.
+            'big_n': int((np.abs(act) >= 0.02).sum()),
+            'big_direction': float(np.mean(np.sign(pred[np.abs(act) >= 0.02]) == np.sign(act[np.abs(act) >= 0.02]))) if (np.abs(act) >= 0.02).any() else None,
+            'naive_within_1ct': float(np.mean(np.abs(act) <= 0.01)),
         }
 
         # Коефициенти върху последните W седмици

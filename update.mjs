@@ -416,7 +416,7 @@ const title = 'Горива утре: дизел ' + arrow(D.ahead[0].price - D.
 const gap = (f) => { const g = model?.fuels?.[f]?.gap; return g == null ? '' : (g > 0.005 ? ' над' : g < -0.005 ? ' под' : ' около') + ' нивото, което борсата оправдава' + (Math.abs(g) > 0.005 ? ' (с ' + Math.round(Math.abs(g) * 100) + ' ст.)' : ''); };
 const why = 'Защо: за седмица в евро дизелът на борсата ' + pct(latest.oil.dieselWeek) + ', бензинът ' + pct(latest.oil.gasolineWeek) + ', Brent ' + pct(latest.oil.brentWeek) + '.'
   + (model ? ' Дизелът у нас е' + gap('diesel') + ', А95 е' + gap('gasoline') + '.' : '');
-const accTxt = model ? '\nТочност за 2 години: дизел ±' + n2(model.fuels.diesel.check.mae * 100, 1) + ' ст., посока ' + Math.round(model.fuels.diesel.check.direction * 100) + '% от седмиците.' : '';
+const accTxt = model?.fuels?.diesel?.check?.big_direction != null ? '\nЗа 2 години при истинска промяна дизелът е познат накъде отива в ' + Math.round(model.fuels.diesel.check.big_direction * 100) + '% от седмиците.' : '';
 const yd = yesterday.diesel;
 const ydLine = yd ? '\nВчера казах за дизела ~' + n2(yd.pred) + ' €, днес е ' + n2(yd.act) + ' € (' + (Math.abs(yd.pred - yd.act) < 0.005 ? 'познато' : 'грешка ' + Math.round(Math.abs(yd.pred - yd.act) * 100) + ' ст.') + ').' : '';
 const warn = failed.length ? '\nВнимание: ' + failed.map((c) => c.name).join('; ') + '.' : '';
