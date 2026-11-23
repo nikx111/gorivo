@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ГРИГОРИВО</title>
+<title>ГРИГОРИВО: кога да заредиш</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='lg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ff9a4d'/><stop offset='1' stop-color='%23e8590c'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23lg)'/><path d='M16 5.5c-4.3 5.6-7.2 9.4-7.2 13.2a7.2 7.2 0 0 0 14.4 0c0-3.8-2.9-7.6-7.2-13.2z' fill='%23fff'/><path d='M11.9 20.6l2.7-2.6 2.1 1.6 3.4-3.5' fill='none' stroke='%23e8590c' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-<meta name="description" content="ГРИГОРИВО: цени на горивата в България, петролът и оценка за следващите дни">
+<meta name="description" content="Кога да заредиш, за да платиш по-малко: прогноза за цените на горивата в България за следващите 5 дни">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -129,25 +129,27 @@ tr.detail td { background: var(--surface-2); padding: 16px; text-align: left; }
 h2 { font-size: 17px; margin: 0; letter-spacing: -.01em; }
 .sub { color: var(--muted); font-size: 13px; margin: 2px 0 0; }
 section { margin-top: 28px; }
-#sections > section:first-child { margin-top: 18px; }
-.mine-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; }
-.mine-bar > div:first-child { display: flex; flex-direction: column; }
-.mine-bar .seg { flex-wrap: wrap; }
-.mine-bar .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+#sections > section:first-child { margin-top: 28px; }
+.hero { display: grid; grid-template-columns: 1fr 1.05fr; gap: 28px; padding: 28px; margin-top: 4px; }
+.hero h1 { font-size: 30px; line-height: 1.15; letter-spacing: -.02em; margin: 0 0 10px; }
+.lead { color: var(--muted); font-size: 15.5px; margin: 0 0 20px; max-width: 46ch; }
+.ask { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+.pick { flex-wrap: wrap; margin-bottom: 14px; }
+.pick button { font-size: 14px; padding: 8px 13px; }
+.hero .pick button[aria-pressed="true"] { background: var(--accent); color: #fff; box-shadow: none; }
+.hero-right { display: flex; flex-direction: column; gap: 16px; background: var(--surface-2); border-radius: 12px; padding: 20px; }
 .tank { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
 .tank input { width: 64px; font: 600 14px 'JetBrains Mono', monospace; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); text-align: right; }
 .tank input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.when { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; }
-.advice { padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+.advice { display: flex; flex-direction: column; gap: 8px; }
 .advice .what { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-.advice .verdict { font-size: 22px; font-weight: 700; letter-spacing: -.01em; line-height: 1.25; }
+.advice .verdict { font-size: 26px; font-weight: 700; letter-spacing: -.01em; line-height: 1.25; }
 .advice .verdict.wait { color: var(--down); } .advice .verdict.now { color: var(--up); }
 .advice p { margin: 0; color: var(--muted); font-size: 14px; }
 .advice .save { font-size: 14px; color: var(--text); }
-.dayscard { padding: 16px; display: flex; flex-direction: column; justify-content: flex-end; }
 .dbars { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-items: end; }
 .dbar { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.25; }
-.dbar .col { width: 100%; max-width: 44px; border-radius: 7px 7px 3px 3px; background: var(--surface-2); border: 1px solid var(--line); }
+.dbar .col { width: 100%; max-width: 44px; border-radius: 7px 7px 3px 3px; background: var(--surface); border: 1px solid var(--line); }
 .dbar.best .col { background: var(--down); border-color: var(--down); }
 .dbar.today .col { background: var(--accent-soft); border-color: var(--accent); }
 .dbar b { color: var(--text); font-size: 12.5px; font-family: 'JetBrains Mono', monospace; }
@@ -222,7 +224,8 @@ footer a { color: var(--muted); }
 .theme svg { width: 16px; height: 16px; }
 
 /* На тесен екран таблицата се плъзга настрани; историята остава закована в видимата част */
-@media (max-width: 760px) { .acc { grid-template-columns: 1fr; } .when { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .bno { display: none; } }
+@media (max-width: 760px) { .acc { grid-template-columns: 1fr; } .hero { grid-template-columns: 1fr; padding: 20px 16px; gap: 18px; } .hero h1 { font-size: 25px; } .hero-right { padding: 16px; } .advice .verdict { font-size: 22px; } }
 @media (max-width: 760px) { .dgrid { grid-template-columns: 1fr; position: sticky; left: 0; width: calc(100vw - 66px); } }
 @media (max-width: 980px) { .fuels { grid-template-columns: repeat(3, 1fr); } .split { grid-template-columns: 1fr; } }
 @media (max-width: 640px) {
@@ -259,20 +262,24 @@ footer a { color: var(--muted); }
     </div>
   </header>
 
-  <div class="mine-bar card">
-    <div><b>Твоето гориво</b><span class="sub" style="margin:0">Избери го и всичко на страницата се подрежда около него</span></div>
-    <div class="seg" id="myfuel" role="group" aria-label="Твоето гориво"></div>
-  </div>
+  <section class="hero card" aria-labelledby="promise">
+    <div class="hero-left">
+      <h1 id="promise">Кога да заредиш, за да платиш по-малко</h1>
+      <p class="lead">ГРИГОРИВО гледа петрола на борсата и цените в България и всеки ден казва какво ще стане с цената на горивото ти през следващите 5 дни.</p>
+      <div class="ask">Какво зареждаш?</div>
+      <div class="seg pick" id="myfuel" role="group" aria-label="Какво зареждаш"></div>
+      <label class="tank">Резервоар <input id="tank" type="number" min="5" max="200" step="5" value="50" inputmode="numeric" aria-label="Литри в резервоара"> литра</label>
+    </div>
+    <div class="hero-right">
+      <div class="advice" id="advice" aria-live="polite"></div>
+      <div class="dbars" id="dbars"></div>
+    </div>
+  </section>
 
   <main id="sections">
   <section data-sec="when">
-    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="when" aria-label="Премести блока „Кога да заредиш“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Кога да заредиш</h2></div><p class="sub">По оценката за следващите 5 дни. Разлики под 1 цент на литър не си струват чакането.</p></div>
-      <label class="tank">Резервоар <input id="tank" type="number" min="5" max="200" step="5" value="50" inputmode="numeric" aria-label="Литри в резервоара"> л</label></div>
-    <div class="when">
-      <div class="card advice" id="advice"></div>
-      <div class="card dayscard"><div class="dbars" id="dbars"></div></div>
-    </div>
-    <div class="card scroll" style="margin-top:12px"><table id="bydays"></table></div>
+    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="when" aria-label="Премести блока „Прогноза по дни“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>Прогноза по дни за всички горива</h2></div><p class="sub">Средна цена в страната, € за литър. Зеленото е най-евтиният ден. Разлики под 1 цент не си струват чакането.</p></div></div>
+    <div class="card scroll"><table id="bydays"></table></div>
     <p class="scrollhint" data-for="bydays">Плъзни таблицата настрани за още дни</p>
   </section>
 
@@ -620,10 +627,10 @@ function renderWhen() {
     text = `Очаква се ${f.name} да е около ${fmt(best.price)} € на литър, с ${cents(save)} по-евтино от днес.`;
   }
   const eur = save * TANK();
-  $('#advice').innerHTML = `<div class="what">${f.name}${myFuel ? '' : ' (избери горивото си горе)'}</div>
+  $('#advice').innerHTML = `<div class="what">${myFuel ? 'Твоето гориво: ' + f.name : f.name + ', докато не избереш своето'}</div>
     <div class="verdict ${cls}">${verdict}</div><p>${text}</p>
     ${cls === 'wait' ? `<div class="save">За ${TANK()} литра разликата е около <b class="num">${fmt(eur)} €</b>.</div>` : ''}
-    <p style="font-size:12.5px">Днес средно ${fmt(f.price)} €. Оценката обикновено греши с 1 до 1,5 цента за седмица, затова приемай я като насока.</p>`;
+    <p style="font-size:12.5px">Днес средно ${fmt(f.price)} € в страната. Оценката обикновено греши с 1 до 1,5 цента за седмица, затова я приемай като насока.</p>`;
   const lo = Math.min(...days.map((d) => d.price)), hi = Math.max(...days.map((d) => d.price)), span = Math.max(hi - lo, 0.02);
   $('#dbars').innerHTML = days.map((d) => `<div class="dbar ${d.today ? 'today' : ''} ${d === best && !best.today && save >= 0.01 ? 'best' : ''}">
       <b>${fmt(d.price)}</b><span class="col" style="height:${36 + Math.round((d.price - lo) / span * 84)}px"></span><span>${d.today ? 'днес' : wd(d.date) + ' ' + dmy(d.date)}</span></div>`).join('');
@@ -777,7 +784,7 @@ Promise.all(['latest', 'oil', 'history', 'model'].map((f) => fetch('data/' + f +
   L = l; OIL = o; HIST = h; MODEL = m;
   const up = new Date(L.updated);
   $('#meta').innerHTML = 'Обновено ' + up.toLocaleString('bg-BG', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Sofia' }) +
-    (L.bno ? `<br>BNO (Brent фонд) <span class="num">${fmt(L.bno.price)} $ ${pct(L.bno.change)}</span>` : '');
+    (L.bno ? `<span class="bno"><br>BNO (Brent фонд) <span class="num">${fmt(L.bno.price)} $ ${pct(L.bno.change)}</span></span>` : '');
   initOrder(); myFuel = L.bg[store.get('myFuel')] ? store.get('myFuel') : null; if (store.get('tank')) $('#tank').value = store.get('tank');
   if (myFuel) { histFuel = myFuel; accFuel = { gasoline98: 'gasoline', dieselplus: 'diesel' }[myFuel] || myFuel; document.querySelectorAll('#accfuel button').forEach((x) => x.setAttribute('aria-pressed', x.dataset.v === accFuel)); }
   renderAll(); initSort(); renderChecks(); hints();
