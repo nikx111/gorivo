@@ -23,7 +23,7 @@
 :root {
   --bg: #f5f6f8; --surface: #ffffff; --surface-2: #f0f2f5; --line: #e3e6eb;
   --text: #14171c; --muted: #5d6573; --faint: #8b93a1;
-  --accent: #e8590c; --accent-soft: #fff1e8;
+  --accent: #e8590c; --accent-soft: #fff1e8; --accent-text: #b8440a;
   --up: #c92a2a; --down: #2b8a3e; --flat: #5d6573;
   --up-soft: #fdecec; --down-soft: #e9f6ec;
   --c1: #e8590c; --c2: #1971c2; --c3: #7048e8; --c4: #0c8599;
@@ -34,7 +34,7 @@
   :root:not([data-theme="light"]) {
     --bg: #0d1014; --surface: #151a21; --surface-2: #1c222b; --line: #262d38;
     --text: #e9edf2; --muted: #9aa4b2; --faint: #6b7584;
-    --accent: #ff8a3d; --accent-soft: #2a1a10;
+    --accent: #ff8a3d; --accent-soft: #2a1a10; --accent-text: #ff9a52;
     --up: #ff6b6b; --down: #51cf66; --flat: #9aa4b2;
     --up-soft: #3a1d1f; --down-soft: #16301d;
     --c1: #ff8a3d; --c2: #4dabf7; --c3: #9775fa; --c4: #3bc9db;
@@ -44,7 +44,7 @@
 :root[data-theme="dark"] {
   --bg: #0d1014; --surface: #151a21; --surface-2: #1c222b; --line: #262d38;
   --text: #e9edf2; --muted: #9aa4b2; --faint: #6b7584;
-  --accent: #ff8a3d; --accent-soft: #2a1a10;
+  --accent: #ff8a3d; --accent-soft: #2a1a10; --accent-text: #ff9a52;
   --up: #ff6b6b; --down: #51cf66; --flat: #9aa4b2;
   --up-soft: #3a1d1f; --down-soft: #16301d;
   --c1: #ff8a3d; --c2: #4dabf7; --c3: #9775fa; --c4: #3bc9db;
@@ -118,11 +118,11 @@ tr.brandrow td:first-child { white-space: nowrap; }
 .blogo img { max-width: 100%; max-height: 100%; display: block; }
 .bname { font-weight: 600; }
 .flink { display: inline-grid; place-items: center; width: 26px; height: 26px; margin-left: 2px; border-radius: 7px; color: var(--faint); vertical-align: middle; }
-.flink:hover { color: var(--accent); background: var(--surface-2); }
+.flink:hover { color: var(--accent-text); background: var(--surface-2); }
 .flink:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .flink svg { width: 14px; height: 14px; }
 .allst { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
-.allst a { color: var(--accent); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.allst a { color: var(--accent-text); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .allst a:hover { text-decoration: underline; }
 .allst a svg { width: 14px; height: 14px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
