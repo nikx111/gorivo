@@ -106,6 +106,14 @@ tr.detail td { background: var(--surface-2); padding: 16px; text-align: left; }
 .dgrid { display: grid; grid-template-columns: 1fr 220px; gap: 16px; align-items: start; }
 .dchart { position: relative; height: 220px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
 .dside { font-size: 13px; color: var(--muted); }
+.ranges { height: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+.rcap { margin: 0; font-size: 12.5px; color: var(--muted); }
+.rtop { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+.rtop i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+.strip { position: relative; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--down-soft), var(--surface-2), var(--up-soft)); border: 1px solid var(--line); }
+.strip .avg { position: absolute; top: -5px; width: 2px; height: 16px; background: var(--muted); transform: translateX(-1px); }
+.strip .dot { position: absolute; top: 50%; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--surface); transform: translate(-50%, -50%); box-shadow: 0 0 0 1px var(--line); }
+.rlbl { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); margin-top: 6px; gap: 6px; }
 .dside h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
 .dside .r { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--line); }
 .dside .r:last-of-type { border-bottom: 0; }
@@ -466,16 +474,27 @@ function renderBrands() {
   sortBrands();
 }
 const brandRows = (b, c) => HIST.filter((r) => r[1] === b.name + ':' + c).sort((x, y) => x[0].localeCompare(y[0]));
+const MIN_DAYS = 5;
 function brandDetail(b, cols) {
   const days = new Set(cols.flatMap((c) => brandRows(b, c).map((r) => r[0]))).size;
-  return `<div class="dgrid"><div class="dchart"><canvas id="bc-${b.name}" aria-label="История на цените в ${b.name}"></canvas></div>
+  // Докато историята е кратка, графика по дни е само няколко точки: вместо нея показваме къде е марката днес
+  // в целия диапазон на страната (от най-евтината до най-скъпата бензиностанция) и спрямо средното
+  const left = days >= MIN_DAYS ? `<div class="dchart"><canvas id="bc-${b.name}" aria-label="История на цените в ${b.name}"></canvas></div>`
+    : `<div class="dchart ranges"><p class="rcap">Къде е ${b.name} днес сред всички бензиностанции в страната. Чертичката е средното.</p>${cols.filter((c) => b.prices[c] && L.bg[c]).map((c) => {
+      const f = L.bg[c], p = b.prices[c].price, span = Math.max(f.max - f.min, 0.01), pos = (x) => Math.min(100, Math.max(0, (x - f.min) / span * 100));
+      return `<div class="rng"><div class="rtop"><span><i style="background:${fuelColor(c)}"></i>${FUELS[c]}</span><b class="num">${fmt(p)} €</b></div>
+        <div class="strip"><span class="avg" style="left:${pos(f.price)}%"></span><span class="dot" style="left:${pos(p)}%;background:${fuelColor(c)}"></span></div>
+        <div class="rlbl num"><span>${fmt(f.min)} най-евтино</span><span>средно ${fmt(f.price)}</span><span>най-скъпо ${fmt(f.max)}</span></div></div>`;
+    }).join('')}</div>`;
+  return `<div class="dgrid">${left}
     <div class="dside"><h4>Спрямо средното за страната</h4>${cols.filter((c) => b.prices[c]).map((c) => {
       const d = b.prices[c].price - (L.bg[c]?.price ?? b.prices[c].price);
       return `<div class="r"><span><i style="background:${fuelColor(c)}"></i>${FUELS[c]}</span><span class="num diff ${d > 0.004 ? 'up' : d < -0.004 ? 'down' : ''}">${d > 0 ? '+' : d < 0 ? '−' : ''}${fmt(Math.abs(d))} €</span></div>`;
     }).join('')}
-    <p>${days < 7 ? 'Историята се трупа ден по ден. Събрани дни: ' + days + '.' : 'Средна цена на марката по дни, € за литър.'}</p></div></div>`;
+    <p>${days < MIN_DAYS ? 'Графиката по дни се появява, когато се съберат ' + MIN_DAYS + ' дни история. Събрани: ' + days + '.' : 'Средна цена на марката по дни, € за литър.'}</p></div></div>`;
 }
 function drawBrand(b, cols) {
+  if (!document.getElementById('bc-' + b.name)) return;
   const dates = [...new Set(cols.flatMap((c) => brandRows(b, c).map((r) => r[0])))].sort();
   const opts = baseOpts('литър');
   opts.plugins.legend = { display: false };
