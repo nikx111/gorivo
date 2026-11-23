@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Горива днес и утре</title>
-<meta name="description" content="Цени на горивата в България, петролът и оценка за следващите дни">
+<title>ГРИГОРИВО</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='lg' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ff9a4d'/><stop offset='1' stop-color='%23e8590c'/></linearGradient></defs><rect width='32' height='32' rx='9' fill='url(%23lg)'/><path d='M16 5.5c-4.3 5.6-7.2 9.4-7.2 13.2a7.2 7.2 0 0 0 14.4 0c0-3.8-2.9-7.6-7.2-13.2z' fill='%23fff'/><path d='M11.9 20.6l2.7-2.6 2.1 1.6 3.4-3.5' fill='none' stroke='%23e8590c' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<meta name="description" content="ГРИГОРИВО: цени на горивата в България, петролът и оценка за следващите дни">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -43,7 +44,38 @@ body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 Inte
 .wrap { max-width: 1160px; margin: 0 auto; padding: 0 16px 56px; }
 header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 0 18px; }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
-.logo svg { width: 28px; height: 28px; color: var(--accent); }
+.logo .mark { width: 34px; height: 34px; flex: none; }
+.word { font-weight: 800; font-size: 19px; letter-spacing: .06em; }
+.word .gri { color: var(--accent); }
+.tools { display: flex; gap: 8px; align-items: center; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--text); font: 500 13px Inter, sans-serif; padding: 7px 12px; border-radius: 9px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--surface-2); }
+.btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn svg { width: 14px; height: 14px; }
+.btn:focus-visible, .mv:focus-visible, .exp:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mv { border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: inline-grid; place-items: center; }
+.mv:hover:not(:disabled) { color: var(--text); border-color: var(--faint); }
+.mv:disabled { opacity: .35; cursor: default; }
+.mv svg { width: 14px; height: 14px; }
+.moves { display: none; gap: 6px; justify-content: space-between; border-top: 1px dashed var(--line); padding-top: 10px; }
+.editing .moves { display: flex; }
+.editing .fuel { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.rowmoves { display: none; gap: 4px; margin-right: 8px; }
+.editing-brands .rowmoves { display: inline-flex; }
+.exp { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.exp svg { width: 16px; height: 16px; color: var(--faint); transition: transform .2s; }
+.exp[aria-expanded="true"] svg { transform: rotate(90deg); color: var(--accent); }
+tr.brandrow { cursor: pointer; }
+tr.brandrow:hover td { background: var(--surface-2); }
+tr.detail td { background: var(--surface-2); padding: 16px; text-align: left; }
+.dgrid { display: grid; grid-template-columns: 1fr 220px; gap: 16px; align-items: start; }
+.dchart { position: relative; height: 220px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.dside { font-size: 13px; color: var(--muted); }
+.dside h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.dside .r { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--line); }
+.dside .r:last-of-type { border-bottom: 0; }
+.dside .r i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+.dside p { margin: 10px 0 0; font-size: 12px; }
 .meta { color: var(--muted); font-size: 13px; text-align: right; }
 .num { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 h2 { font-size: 17px; margin: 0; letter-spacing: -.01em; }
@@ -107,6 +139,8 @@ footer a { color: var(--muted); }
 .theme { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 9px; width: 34px; height: 34px; cursor: pointer; display: grid; place-items: center; }
 .theme svg { width: 16px; height: 16px; }
 
+/* На тесен екран таблицата се плъзга настрани; историята остава закована в видимата част */
+@media (max-width: 760px) { .dgrid { grid-template-columns: 1fr; position: sticky; left: 0; width: calc(100vw - 66px); } }
 @media (max-width: 980px) { .fuels { grid-template-columns: repeat(3, 1fr); } .split { grid-template-columns: 1fr; } }
 @media (max-width: 640px) {
   .fuels { grid-template-columns: 1fr 1fr; }
@@ -126,8 +160,8 @@ footer a { color: var(--muted); }
 <div class="wrap">
   <header>
     <div class="logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 22V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v17"/><path d="M2 22h14"/><path d="M15 9h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V8l-3-3"/><path d="M6 8h6"/></svg>
-      Горива днес и утре
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a4d"/><stop offset="1" stop-color="#e8590c"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#lg)"/><path d="M16 5.5c-4.3 5.6-7.2 9.4-7.2 13.2a7.2 7.2 0 0 0 14.4 0c0-3.8-2.9-7.6-7.2-13.2z" fill="#fff"/><path d="M11.9 20.6l2.7-2.6 2.1 1.6 3.4-3.5" fill="none" stroke="#e8590c" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="word"><span class="gri">ГРИ</span>ГОРИВО</span>
     </div>
     <div style="display:flex;gap:12px;align-items:center">
       <div class="meta" id="meta">Зареждане…</div>
@@ -136,7 +170,8 @@ footer a { color: var(--muted); }
   </header>
 
   <section style="margin-top:4px">
-    <div class="head"><div><h2>Средни цени в България</h2><p class="sub">Днес по Fuelo и оценка за следващите три дни</p></div></div>
+    <div class="head"><div><h2>Средни цени в България</h2><p class="sub">Днес по Fuelo и оценка за следващите три дни. Редът на горивата важи за цялата страница.</p></div>
+      <button class="btn" id="orderfuels" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg><span>Подреди</span></button></div>
     <div class="fuels" id="fuels"></div>
   </section>
 
@@ -169,7 +204,8 @@ footer a { color: var(--muted); }
   </section>
 
   <section>
-    <div class="head"><div><h2>По бензиностанции</h2><p class="sub">Средна цена на марката в страната, € за литър. Зеленото е най-евтиното.</p></div></div>
+    <div class="head"><div><h2>По бензиностанции</h2><p class="sub">Средна цена на марката в страната, € за литър. Зеленото е най-евтиното. Натисни марка, за да видиш историята ѝ.</p></div>
+      <button class="btn" id="orderbrands" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg><span>Подреди</span></button></div>
     <div class="card scroll"><table id="brands"></table><div class="note" id="brandnote" hidden></div></div>
   </section>
 
@@ -208,6 +244,7 @@ footer a { color: var(--muted); }
   </section>
 
   <footer>
+    <p><b>ГРИГОРИВО</b> събира цените веднъж на ден.</p>
     <p><b>Как се смята оценката.</b> Гледа колко се е променила борсовата цена на бензина и дизела в евро за около седмица (средно за последните 3 борсови дни срещу дни от 8 до 10 назад), добавя ДДС и приема, че бензиностанциите прехвърлят промяната постепенно, за около 5 дни. Когато се съберат 20 дни данни, скоростта се изчислява от реалните промени. Газта следва Brent. Това е оценка, не обещание: търговците решават сами кога и с колко да сменят цените.</p>
     <p>Източници: цени на колонката от <a href="https://fuelo.net" rel="noopener">Fuelo.net</a>, борсови цени и курсове от Yahoo Finance (фючърси BZ=F, CL=F, HO=F, RB=F). Акциз: бензин 0,363 €/л, дизел 0,330 €/л, газ около 0,094 €/л. Данните се обновяват веднъж на ден.</p>
   </footer>
@@ -231,7 +268,7 @@ $('#theme').onclick = () => {
   const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
   document.documentElement.dataset.theme = dark ? 'light' : 'dark';
   try { localStorage.setItem('theme', document.documentElement.dataset.theme); } catch {}
-  drawOil(); drawHist();
+  drawOil(); drawHist(); if (L) renderBrands();
 };
 
 function seg(id, onChange) {
@@ -251,34 +288,96 @@ const chip = (d) => {
   return `<span class="chip ${c}">${t}</span>`;
 };
 
+// Ред на горивата и марките: избира се с „Подреди“ и се пази в браузъра
+const ICON = {
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+};
+const store = { get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+let fuelOrder = [], brandOrder = [];
+const SERIES = ['--c1', '--c2', '--c3', '--c4', '--faint'];
+function initOrder() {
+  const sortBy = (saved, all) => [...(saved || []).filter((x) => all.includes(x)), ...all.filter((x) => !(saved || []).includes(x))];
+  fuelOrder = sortBy(store.get('fuelOrder'), Object.keys(L.bg));
+  brandOrder = sortBy(store.get('brandOrder'), L.brands.map((b) => b.name));
+}
+const fuelCols = () => fuelOrder.filter((c) => c !== 'lpg'); // марките и съседите нямат газ в таблицата
+const brandsSorted = () => brandOrder.map((n) => L.brands.find((b) => b.name === n));
+const fuelColor = (code) => css(SERIES[fuelOrder.indexOf(code)] || '--faint');
+function move(list, i, d, key) {
+  const j = i + d; if (j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  store.set(key, list);
+  renderAll();
+}
+
 function renderFuels() {
-  $('#fuels').innerHTML = Object.entries(L.bg).map(([code, f]) => `
+  $('#fuels').innerHTML = fuelOrder.map((code, i) => { const f = L.bg[code]; return `
     <div class="card fuel">
       <div class="name">${f.name}</div>
       <div class="price num">${fmt(f.price)}<small>€</small></div>
       <div class="range num">от ${fmt(f.min)} до ${fmt(f.max)} €</div>
       ${chip(f.ahead[0].price - f.price)}
       <div class="next">${f.ahead.map((a) => `<div>${wd(a.date)} ${dmy(a.date)}<b class="num">~${fmt(a.price)}</b></div>`).join('')}</div>
-    </div>`).join('');
+      <div class="moves"><button class="mv" data-fi="${i}" data-d="-1" ${i ? '' : 'disabled'} aria-label="${f.name} наляво">${ICON.left}</button><button class="mv" data-fi="${i}" data-d="1" ${i < fuelOrder.length - 1 ? '' : 'disabled'} aria-label="${f.name} надясно">${ICON.right}</button></div>
+    </div>`; }).join('');
 }
+$('#fuels').addEventListener('click', (e) => { const b = e.target.closest('.mv'); if (b) move(fuelOrder, +b.dataset.fi, +b.dataset.d, 'fuelOrder'); });
 
+const openBrands = new Set(), brandCharts = {};
 function renderBrands() {
   const stale = L.brands.filter((b) => !Object.keys(b.prices).length).map((b) => b.name);
   $('#brandnote').textContent = stale.length ? stale.join(', ') + ': във Fuelo няма цени от последната седмица, затова не са показани.' : '';
   $('#brandnote').hidden = !stale.length;
-  const cols = ['gasoline', 'gasoline98', 'diesel', 'dieselplus'];
+  const cols = fuelCols(), list = brandsSorted();
   const best = Object.fromEntries(cols.map((c) => [c, Math.min(...L.brands.map((b) => b.prices[c]?.price ?? Infinity))]));
+  Object.values(brandCharts).forEach((c) => c.destroy());
   $('#brands').innerHTML = `<thead><tr><th>Марка</th>${cols.map((c) => `<th>${FUELS[c]}</th>`).join('')}</tr></thead><tbody>` +
-    L.brands.map((b) => `<tr><td class="brand">${b.name}</td>${cols.map((c) => {
-      const p = b.prices[c];
-      if (!p) return '<td class="num" style="color:var(--faint)">няма</td>';
-      return `<td class="num ${p.price === best[c] ? 'best' : ''}">${fmt(p.price)}${p.label ? `<span class="lbl">${p.label}</span>` : ''}</td>`;
-    }).join('')}</tr>`).join('') + `<tr><td style="color:var(--muted)">Средно за страната</td>${cols.map((c) => `<td class="num" style="color:var(--muted)">${fmt(L.bg[c]?.price)}</td>`).join('')}</tr></tbody>`;
+    list.map((b, i) => {
+      const open = openBrands.has(b.name), has = Object.keys(b.prices).length;
+      return `<tr class="brandrow" data-b="${b.name}"><td><span class="rowmoves"><button class="mv" data-bi="${i}" data-d="-1" ${i ? '' : 'disabled'} aria-label="${b.name} нагоре">${ICON.up}</button><button class="mv" data-bi="${i}" data-d="1" ${i < list.length - 1 ? '' : 'disabled'} aria-label="${b.name} надолу">${ICON.down}</button></span><button class="exp" aria-expanded="${open}" ${has ? '' : 'disabled'}>${has ? ICON.right : ''}${b.name}</button></td>${cols.map((c) => {
+        const p = b.prices[c];
+        if (!p) return '<td class="num" style="color:var(--faint)">няма</td>';
+        return `<td class="num ${p.price === best[c] ? 'best' : ''}">${fmt(p.price)}${p.label ? `<span class="lbl">${p.label}</span>` : ''}</td>`;
+      }).join('')}</tr>` + (open ? `<tr class="detail"><td colspan="${cols.length + 1}">${brandDetail(b, cols)}</td></tr>` : '');
+    }).join('') + `<tr><td style="color:var(--muted)">Средно за страната</td>${cols.map((c) => `<td class="num" style="color:var(--muted)">${fmt(L.bg[c]?.price)}</td>`).join('')}</tr></tbody>`;
+  list.filter((b) => openBrands.has(b.name)).forEach((b) => drawBrand(b, cols));
 }
+const brandRows = (b, c) => HIST.filter((r) => r[1] === b.name + ':' + c).sort((x, y) => x[0].localeCompare(y[0]));
+function brandDetail(b, cols) {
+  const days = new Set(cols.flatMap((c) => brandRows(b, c).map((r) => r[0]))).size;
+  return `<div class="dgrid"><div class="dchart"><canvas id="bc-${b.name}" aria-label="История на цените в ${b.name}"></canvas></div>
+    <div class="dside"><h4>Спрямо средното за страната</h4>${cols.filter((c) => b.prices[c]).map((c) => {
+      const d = b.prices[c].price - (L.bg[c]?.price ?? b.prices[c].price);
+      return `<div class="r"><span><i style="background:${fuelColor(c)}"></i>${FUELS[c]}</span><span class="num diff ${d > 0.004 ? 'up' : d < -0.004 ? 'down' : ''}">${d > 0 ? '+' : d < 0 ? '−' : ''}${fmt(Math.abs(d))} €</span></div>`;
+    }).join('')}
+    <p>${days < 7 ? 'Историята се трупа ден по ден. Събрани дни: ' + days + '.' : 'Средна цена на марката по дни, € за литър.'}</p></div></div>`;
+}
+function drawBrand(b, cols) {
+  const dates = [...new Set(cols.flatMap((c) => brandRows(b, c).map((r) => r[0])))].sort();
+  const opts = baseOpts('литър');
+  opts.plugins.legend = { display: false };
+  opts.plugins.tooltip.displayColors = true;
+  opts.plugins.tooltip.callbacks.label = (c) => ' ' + c.dataset.label + ': ' + fmt(c.parsed.y) + ' €';
+  opts.scales.y.ticks.callback = (v) => fmt(v, 2);
+  brandCharts[b.name] = new Chart(document.getElementById('bc-' + b.name), { type: 'line', options: opts, data: { labels: dates.map(dmy), datasets: cols.filter((c) => b.prices[c]).map((c) => {
+    const m = Object.fromEntries(brandRows(b, c).map((r) => [r[0], r[2]]));
+    return { label: FUELS[c], data: dates.map((d) => m[d] ?? null), borderColor: fuelColor(c), backgroundColor: fuelColor(c), tension: .25, borderWidth: 2, pointRadius: 3, spanGaps: true };
+  }) } });
+}
+$('#brands').addEventListener('click', (e) => {
+  const mv = e.target.closest('.mv');
+  if (mv) { e.stopPropagation(); return move(brandOrder, +mv.dataset.bi, +mv.dataset.d, 'brandOrder'); }
+  const row = e.target.closest('tr.brandrow'); if (!row || row.querySelector('.exp').disabled) return;
+  const n = row.dataset.b; openBrands.has(n) ? openBrands.delete(n) : openBrands.add(n);
+  renderBrands();
+});
 
 function renderBars() {
   const parts = [['product', '--c2'], ['excise', '--c3'], ['vat', '--c4'], ['margin', '--c1']];
-  $('#bars').innerHTML = Object.values(L.bg).filter((f) => f.breakdown).map((f) => {
+  $('#bars').innerHTML = fuelOrder.map((c) => L.bg[c]).filter((f) => f.breakdown).map((f) => {
     const b = f.breakdown;
     return `<div class="bar-row"><div class="top"><b>${f.name}</b><span class="num">${fmt(f.price)} €</span></div>
       <div class="bar">${parts.map(([k, c]) => `<span title="${fmt(b[k], 3)} €" style="width:${Math.max(0, b[k]) / f.price * 100}%;background:var(${c})"></span>`).join('')}</div>
@@ -287,7 +386,7 @@ function renderBars() {
 }
 
 function renderCountries() {
-  const cols = ['gasoline', 'gasoline98', 'diesel', 'dieselplus'];
+  const cols = fuelCols();
   const rows = [{ name: 'България', prices: Object.fromEntries(cols.map((c) => [c, L.bg[c] && { price: L.bg[c].price }])) }, ...L.countries];
   $('#countries').innerHTML = `<thead><tr><th>Държава</th>${cols.map((c) => `<th>${FUELS[c]}</th>`).join('')}</tr></thead><tbody>` +
     rows.map((r, i) => `<tr><td class="brand">${r.name}</td>${cols.map((c) => {
@@ -297,6 +396,20 @@ function renderCountries() {
       const local = p.currency && p.currency !== 'EUR' ? `<span class="lbl">${fmt(p.local)} ${p.currency === 'RON' ? 'леи' : p.currency}</span>` : '';
       return `<td class="num">${fmt(p.price)}${d != null ? ` <span class="diff ${d > 0 ? 'up' : 'down'}" style="font-size:12px">${pct(d)}</span>` : ''}${local}</td>`;
     }).join('')}</tr>`).join('') + '</tbody>';
+}
+
+function renderHistTabs() {
+  if (!fuelOrder.includes(histFuel)) histFuel = fuelOrder[0];
+  $('#histfuel').innerHTML = fuelOrder.map((c) => `<button data-v="${c}" aria-pressed="${c === histFuel}">${L.bg[c].name}</button>`).join('');
+}
+function renderAll() { renderFuels(); renderBrands(); renderBars(); renderCountries(); renderHistTabs(); }
+for (const [id, cls, el] of [['#orderfuels', 'editing', '#fuels'], ['#orderbrands', 'editing-brands', '#brands']]) {
+  $(id).addEventListener('click', () => {
+    const on = $(id).getAttribute('aria-pressed') !== 'true';
+    $(id).setAttribute('aria-pressed', on);
+    $(id).querySelector('span').textContent = on ? 'Готово' : 'Подреди';
+    $(el).classList.toggle(cls, on);
+  });
 }
 
 // Борсата: дни, седмици или месеци за избран период
@@ -378,8 +491,7 @@ Promise.all(['latest', 'oil', 'history'].map((f) => fetch('data/' + f + '.json?'
   const up = new Date(L.updated);
   $('#meta').innerHTML = 'Обновено ' + up.toLocaleString('bg-BG', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Sofia' }) +
     (L.bno ? `<br>BNO (Brent фонд) <span class="num">${fmt(L.bno.price)} $ ${pct(L.bno.change)}</span>` : '');
-  renderFuels(); renderBrands(); renderBars(); renderCountries();
-  $('#histfuel').innerHTML = Object.entries(L.bg).map(([c, f]) => `<button data-v="${c}" aria-pressed="${c === histFuel}">${f.name}</button>`).join('');
+  initOrder(); renderAll();
   seg('#histfuel', (v) => { histFuel = v; drawHist(); });
   // Графиките се чертаят след шрифтовете, иначе подписите на осите се мерят с резервния шрифт и се изрязват
   document.fonts.ready.then(() => { drawOil(); drawHist(); });
