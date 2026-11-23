@@ -89,6 +89,7 @@ tr.sort-chosen td { background: var(--surface-2); }
 .acc .big { font-size: 26px; font-weight: 600; letter-spacing: -.02em; }
 .acc .row2 { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); padding: 6px 0; border-top: 1px solid var(--line); }
 .acc .row2 b { color: var(--text); font-weight: 600; }
+.learnhead { padding: 14px 16px 4px; display: flex; flex-direction: column; gap: 4px; }
 .checks { padding: 6px 16px; }
 .check { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
 .check:last-child { border-bottom: 0; }
@@ -344,6 +345,7 @@ footer a { color: var(--muted); }
       <div class="controls"><div class="seg" id="accfuel" role="group" aria-label="Гориво"><button data-v="gasoline" aria-pressed="true">А95</button><button data-v="diesel">Дизел</button><button data-v="lpg">Газ</button></div></div>
     </div>
     <div class="acc" id="acc"></div>
+    <div class="card" style="margin-top:12px"><div class="learnhead"><b>Как се учи от грешките си</b><span class="sub" style="margin:0">Всяка прогноза се сравнява с реалната цена, когато денят дойде. От грешките се смятат две поправки: колко бързо реално се движат цените и дали оценката системно е по-висока или по-ниска. Поправките растат постепенно, докато се събират проверени дни.</span></div><div class="scroll"><table id="learn"></table></div></div>
     <div class="card chartbox" style="margin-top:12px"><div class="head" style="margin-bottom:4px"><p class="sub" style="margin:0">Промяна на цената за седмица, центове: колони е реалната, линия е оценката</p></div><div class="chartwrap" style="height:240px"><canvas id="accchart" aria-label="Реална и предсказана промяна по седмици"></canvas></div></div>
   </section>
 
@@ -727,9 +729,12 @@ function renderAcc() {
       <div class="row2"><span>Седмици с промяна над 0,5 ст.</span><b class="num">${c.direction_n}</b></div>
       <div class="row2"><span>Проверени седмици</span><b class="num">${c.weeks}</b></div></div>
     <div class="card"><div class="sub">Реални прогнози за утре</div>${lv && lv.n ? `<div class="big num">±${ct(lv.mae)}</div>
-      <div class="row2"><span>Проверени дни</span><b class="num">${lv.n}</b></div>
+      <div class="row2"><span>Проверени прогнози</span><b class="num">${lv.n}</b></div>
+      <div class="row2"><span>Без поправките щеше да е</span><b class="num">±${ct(lv.maeRaw)}</b></div>
+      <div class="row2"><span>Ако приемем „няма промяна“</span><b class="num">±${ct(lv.naive)}</b></div>
       <div class="row2"><span>Позната посока</span><b class="num">${lv.direction == null ? 'няма промени' : Math.round(lv.direction * 100) + '%'}</b></div>`
-      : `<div class="big" style="font-size:18px;margin-top:6px">Започват от ${dmy(lv?.since || L.date)}</div><div class="row2"><span>Всяка прогноза се записва и се сравнява с реалната цена, когато денят дойде.</span></div>`}</div>`;
+      : `<div class="big" style="font-size:18px;margin-top:6px">Започват от ${dmy(lv?.since || L.date)}</div><div class="row2"><span>Първата проверка е утре, когато излезе реалната цена.</span></div>`}</div>`;
+  renderLearn();
   $('#accsub').textContent = 'Проверка върху ' + c.weeks + ' седмици до ' + dmy(MODEL.bulletin_date) + '.' + MODEL.bulletin_date.slice(2, 4) + ': всяка седмица е предсказана само с данните отпреди нея. Борсов ориентир: ' + { 'RB=F': 'бензин RBOB', 'HO=F': 'дизел ULSD', 'BZ=F': 'Brent' }[m.driver] + '.';
   const bt = m.backtest.slice(-52), up = css('--up'), down = css('--down');
   const opts = baseOpts('литър');
@@ -745,6 +750,18 @@ function renderAcc() {
 
 const OKI = '<svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-label="Наред"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg>';
 const BADI = '<svg class="bad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-label="Внимание"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.01"/></svg>';
+function renderLearn() {
+  const lv = L.live; if (!lv?.learned) { $('#learn').innerHTML = ''; return; }
+  const ct = (x) => (x == null ? 'няма' : '±' + fmt(x * 100, 2) + ' ст.');
+  const speed = (l) => (l.n < 3 ? 'още учи' : l.s < 0.95 ? 'по-бавно, ×' + fmt(l.s) : l.s > 1.05 ? 'по-бързо, ×' + fmt(l.s) : 'точна');
+  $('#learn').innerHTML = `<thead><tr><th>Гориво</th><th>Проверени</th><th>Грешка за утре</th><th>Без поправка</th><th>Скорост</th><th>Поправка за утре</th></tr></thead><tbody>` +
+    fuelOrder.map((c) => {
+      const l = lv.learned[c], a = lv.byFuel?.[c]?.[0]; if (!l) return '';
+      const corr = l.corr[0];
+      return `<tr class="${c === myFuel ? 'mine' : ''}"><td class="brand">${L.bg[c].name}</td><td class="num">${a?.n ?? 0}</td><td class="num">${ct(a?.mae)}</td><td class="num">${ct(a?.maeRaw)}</td><td>${speed(l)}</td><td class="num">${Math.abs(corr) < 0.0005 ? 'няма' : (corr > 0 ? '+' : '−') + fmt(Math.abs(corr) * 100, 1) + ' ст.'}</td></tr>`;
+    }).join('') + '</tbody>';
+}
+
 function renderChecks() {
   const c = L.checks || [];
   $('#checks').innerHTML = c.length ? c.map((x) => `<div class="check">${x.ok ? OKI : BADI}<div>${x.name}<small class="num">${x.detail}</small></div></div>`).join('') : '<div class="check"><div></div><div>Няма проверки в тези данни</div></div>';

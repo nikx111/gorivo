@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { learn, apply, accuracy, HORIZONS } from './learn.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const envFile = path.join(here, '.env');
@@ -211,7 +212,7 @@ for (const f of FUELS) {
   for (let i = 1; i <= DAYS_AHEAD; i++) {
     const day = sofiaDate(new Date(Date.parse(d.date + 'T12:00:00Z') + i * 864e5));
     const delta = method === 'model' ? (mp[day] ?? Object.values(mp).at(-1)) - mp[d.date] : pr.p * (1 - (1 - k) ** i);
-    ahead.push({ date: day, price: +(d.price + delta).toFixed(3) });
+    ahead.push({ date: day, raw: +(d.price + delta).toFixed(4), price: +(d.price + delta).toFixed(3) });
   }
   // Разбивка: ДДС е 1/6 от цената, акцизът е от бюлетина на ЕК (цена с данъци − без данъци − ДДС),
   // продуктът е борсовата цена, останалото е доставка, складове и печалба
@@ -270,30 +271,48 @@ if (process.env.FINNHUB_API_KEY) try {
   if (r.ok) { const q = await r.json(); bno = { price: q.c, change: q.dp }; }
 } catch {}
 
-// --- Дневник на прогнозите и реалната точност ---
-// Всяка прогноза се записва; когато денят дойде, се сравнява с цената от Fuelo.
+// --- Дневник на прогнозите, учене от грешките и реална точност (learn.mjs) ---
+// Всяка прогноза се записва сурова (raw, както я дава моделът) и поправена (pred, каквато е показана).
+// Когато денят дойде, се сравнява с цената от Fuelo; от грешките се учат поправките за следващите прогнози.
 const fcFile = path.join(dataDir, 'forecasts.csv');
-const fcs = existsSync(fcFile) ? readFileSync(fcFile, 'utf8').trim().split('\n').slice(1).filter(Boolean).map((l) => {
-  const [made, target, fuel, base, pred, method] = l.split(',');
-  return { made, target, fuel, base: +base, pred: +pred, method };
-}) : [];
+const fcLines = existsSync(fcFile) ? readFileSync(fcFile, 'utf8').trim().split('\n') : [];
+const fcHead = (fcLines[0] || '').split(',');
+const fcs = fcLines.slice(1).filter(Boolean).map((l) => {
+  const v = Object.fromEntries(fcHead.map((k, i) => [k, l.split(',')[i]]));
+  return { made: v.made, target: v.target, fuel: v.fuel, base: +v.base, raw: +(v.raw ?? v.pred), pred: +v.pred, method: v.method };
+});
+const actual = (fuel, date) => hist.find((r) => r.fuel === fuel && r.date === date)?.price;
+const learned = {};
+for (const [code, f] of Object.entries(bg)) {
+  const Lr = learn(fcs, actual, code, TODAY);
+  learned[code] = { s: Lr.s, n: Lr.n, corr: Lr.corr, count: Lr.count };
+  f.ahead.forEach((a, i) => { a.price = +apply(Lr, f.price, a.raw, i + 1).toFixed(3); });
+  f.learn = learned[code];
+}
 for (const [code, f] of Object.entries(bg)) for (const a of f.ahead) {
   const i = fcs.findIndex((r) => r.made === f.date && r.target === a.date && r.fuel === code);
-  const row = { made: f.date, target: a.date, fuel: code, base: f.price, pred: a.price, method: f.method };
+  const row = { made: f.date, target: a.date, fuel: code, base: f.price, raw: a.raw, pred: a.price, method: f.method };
   if (i >= 0) fcs[i] = row; else fcs.push(row);
 }
-writeFileSync(fcFile, 'made,target,fuel,base,pred,method\n' + fcs.map((r) => [r.made, r.target, r.fuel, r.base, r.pred, r.method].join(',')).join('\n') + '\n');
-const actual = (fuel, date) => hist.find((r) => r.fuel === fuel && r.date === date)?.price;
-const done = fcs.filter((r) => (Date.parse(r.target) - Date.parse(r.made)) / 864e5 === 1 && actual(r.fuel, r.target) != null)
-  .map((r) => ({ ...r, act: actual(r.fuel, r.target) }));
-const moved = done.filter((r) => Math.abs(r.act - r.base) >= 0.005);
+writeFileSync(fcFile, 'made,target,fuel,base,raw,pred,method\n' + fcs.map((r) => [r.made, r.target, r.fuel, r.base, r.raw, r.pred, r.method].join(',')).join('\n') + '\n');
+const acc = Object.fromEntries(Object.keys(bg).map((c) => [c, accuracy(fcs, actual, c, TODAY)]));
+const all1 = Object.values(acc).map((a) => a[0]).filter((a) => a.n);
+const sumN = all1.reduce((x, a) => x + a.n, 0), sumD = all1.reduce((x, a) => x + a.directionN, 0);
 const live = {
-  since: fcs.map((r) => r.made).sort()[0] ?? TODAY, n: done.length,
-  mae: done.length ? done.reduce((s, r) => s + Math.abs(r.pred - r.act), 0) / done.length : null,
-  naive: done.length ? done.reduce((s, r) => s + Math.abs(r.act - r.base), 0) / done.length : null,
-  direction: moved.length ? moved.filter((r) => Math.sign(r.pred - r.base) === Math.sign(r.act - r.base)).length / moved.length : null,
-  directionN: moved.length,
+  since: fcs.map((r) => r.made).sort()[0] ?? TODAY, n: sumN,
+  mae: sumN ? all1.reduce((x, a) => x + a.mae * a.n, 0) / sumN : null,
+  maeRaw: sumN ? all1.reduce((x, a) => x + a.maeRaw * a.n, 0) / sumN : null,
+  naive: sumN ? all1.reduce((x, a) => x + a.naive * a.n, 0) / sumN : null,
+  direction: sumD ? all1.reduce((x, a) => x + (a.direction ?? 0) * a.directionN, 0) / sumD : null,
+  directionN: sumD, byFuel: acc, learned,
 };
+// Вчерашната прогноза за утре срещу днешната реална цена, за известието
+const yesterday = Object.fromEntries(Object.keys(bg).map((c) => {
+  const r = fcs.filter((x) => x.fuel === c && x.target === TODAY && (Date.parse(x.target) - Date.parse(x.made)) / 864e5 === 1)[0];
+  const a = actual(c, TODAY);
+  return [c, r && a != null ? { pred: r.pred, act: a } : null];
+}));
+console.log('Учене: ' + Object.entries(learned).map(([c, l]) => c + ' скорост ' + l.s.toFixed(2) + ' от ' + l.n + ', поправка утре ' + (l.corr[0] * 100).toFixed(1) + ' ст.').join('; '));
 
 // --- Проверки на данните: всяка стойност се сверява с независим източник ---
 const checks = [];
@@ -355,9 +374,11 @@ const title = 'Горива утре: дизел ' + arrow(D.ahead[0].price - D.
 const gap = (f) => { const g = model?.fuels?.[f]?.gap; return g == null ? '' : (g > 0.005 ? ' над' : g < -0.005 ? ' под' : ' около') + ' нивото, което борсата оправдава' + (Math.abs(g) > 0.005 ? ' (с ' + Math.round(Math.abs(g) * 100) + ' ст.)' : ''); };
 const why = 'Защо: за седмица в евро дизелът на борсата ' + pct(latest.oil.dieselWeek) + ', бензинът ' + pct(latest.oil.gasolineWeek) + ', Brent ' + pct(latest.oil.brentWeek) + '.'
   + (model ? ' Дизелът у нас е' + gap('diesel') + ', А95 е' + gap('gasoline') + '.' : '');
-const acc = model ? '\nТочност за 2 години: дизел ±' + n2(model.fuels.diesel.check.mae * 100, 1) + ' ст., посока ' + Math.round(model.fuels.diesel.check.direction * 100) + '% от седмиците.' : '';
+const accTxt = model ? '\nТочност за 2 години: дизел ±' + n2(model.fuels.diesel.check.mae * 100, 1) + ' ст., посока ' + Math.round(model.fuels.diesel.check.direction * 100) + '% от седмиците.' : '';
+const yd = yesterday.diesel;
+const ydLine = yd ? '\nВчера казах за дизела ~' + n2(yd.pred) + ' €, днес е ' + n2(yd.act) + ' € (' + (Math.abs(yd.pred - yd.act) < 0.005 ? 'познато' : 'грешка ' + Math.round(Math.abs(yd.pred - yd.act) * 100) + ' ст.') + ').' : '';
 const warn = failed.length ? '\nВнимание: ' + failed.map((c) => c.name).join('; ') + '.' : '';
-const body = lines.join('\n') + '\n' + why + acc + warn + '\nОценка, не обещание.';
+const body = lines.join('\n') + '\n' + why + accTxt + ydLine + warn + '\nОценка, не обещание.';
 console.log('\n' + title + '\n' + body);
 
 const stateFile = path.join(dataDir, 'state.json'), state = readJson(stateFile, {});

@@ -21,6 +21,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install numpy openpyxl
+      - run: node --test test/
       - run: node update.mjs
         env:
           FUELO_API_KEY: ${{ secrets.FUELO_API_KEY }}
