@@ -91,9 +91,46 @@ async function yahoo(sym) {
   return out;
 }
 const SYMS = { brent: 'BZ=F', wti: 'CL=F', diesel: 'HO=F', gasoline: 'RB=F', eurusd: 'EURUSD=X', eurron: 'EURRON=X' };
+
+// Yahoo сменя BZ=F (и HO=F, RB=F, CL=F) на следващия договор дни преди текущият да изтече, а TradingView (UKOIL)
+// и повечето сайтове показват текущия до края. Без поправка цената скача с разликата между двата месеца
+// (за Brent 2-3 $), а оценката вижда фалшиво поскъпване или поевтиняване.
+// Поправка: в последните 15 дни, където „непрекъснатата“ цена вече е равна на следващия договор,
+// а по-ранният още се търгува, слагаме цената на по-ранния.
+const MONTHS = 'FGHJKMNQUVXZ';
+async function contract(root, y, m) {
+  const sym = root + MONTHS[m] + String(y).slice(2) + '.NYM';
+  try {
+    const r = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?range=1mo&interval=1d', { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    if (!r.ok) return null;
+    const d = (await r.json()).chart.result?.[0];
+    if (!d?.timestamp || Date.now() / 1000 - d.meta.regularMarketTime > 4 * 86400) return null; // изтекъл или не се търгува
+    const out = {};
+    d.timestamp.forEach((t, i) => { const c = d.indicators.quote[0].close[i]; if (c != null) out[new Date(t * 1000).toISOString().slice(0, 10)] = c; });
+    return out;
+  } catch { return null; }
+}
+async function fixRoll(root, series) {
+  const now = new Date(), tries = [];
+  for (let i = 0; i < 4; i++) { const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + i, 1)); tries.push(contract(root, t.getUTCFullYear(), t.getUTCMonth())); }
+  const live = (await Promise.all(tries)).filter(Boolean);
+  if (live.length < 2) return 0;
+  const [front, next] = live, from = new Date(Date.now() - 15 * 864e5).toISOString().slice(0, 10);
+  let fixed = 0;
+  for (const d of Object.keys(series)) {
+    if (d < from || front[d] == null || next[d] == null) continue;
+    if (Math.abs(series[d] - next[d]) < 0.02 && Math.abs(front[d] - next[d]) >= 0.02) { series[d] = front[d]; fixed++; }
+  }
+  return fixed;
+}
+
 let oil = readJson(oilFile, null);
 try {
   const got = Object.fromEntries(await Promise.all(Object.entries(SYMS).map(async ([k, s]) => [k, await yahoo(s)])));
+  for (const [k, root] of [['brent', 'BZ'], ['wti', 'CL'], ['diesel', 'HO'], ['gasoline', 'RB']]) {
+    const n = await fixRoll(root, got[k]);
+    if (n) console.log(k + ': ' + n + ' дни сменени с текущия договор (Yahoo е минал на следващия по-рано)');
+  }
   const dates = Object.keys(got.brent).filter((d) => got.eurusd[d]).sort();
   oil = {
     updated: new Date().toISOString(),
