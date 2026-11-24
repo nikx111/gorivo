@@ -428,6 +428,15 @@ const topic = process.env.NTFY_TOPIC;
 if (topic && !NO_NTFY && state.ntfy !== TODAY) {
   const headers = { Title: '=?UTF-8?B?' + Buffer.from(title).toString('base64') + '?=', Tags: 'fuelpump', Priority: '3' };
   if (process.env.SITE_URL) headers.Click = process.env.SITE_URL;
+  // GitHub пуска задачите по график със закъснение, понякога с часове. Нощем (22:00 до 7:00) известието
+  // не се праща веднага: ntfy го пази и го доставя в 8:00 българско време.
+  const h = +new Date().toLocaleString('en-GB', { timeZone: 'Europe/Sofia', hour: '2-digit', hour12: false });
+  if (h >= 22 || h < 7) {
+    const sofiaNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Sofia' }));
+    const at = new Date(sofiaNow); at.setHours(8, 0, 0, 0); if (h >= 22) at.setDate(at.getDate() + 1);
+    headers.At = String(Math.floor((Date.now() + (at - sofiaNow)) / 1000));
+    console.log('нощ е: известието ще дойде в 8:00');
+  }
   const r = await fetch('https://ntfy.sh/' + topic, { method: 'POST', body, headers });
   console.log('ntfy', r.status);
   if (r.ok) writeJson(stateFile, { ...state, ntfy: TODAY });
