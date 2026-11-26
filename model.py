@@ -57,14 +57,22 @@ def yahoo(sym):
 
 def daily_costs():
     fx, raw = yahoo('EURUSD=X'), {s: yahoo(s) for s in ['RB=F', 'HO=F', 'BZ=F']}
-    # последните 2 години от oil.json (там смяната на договорите е оправена)
+    # последните 2 години от oil.json (там скоковете при смяна на договора са изгладени)
     oil = json.load(open(os.path.join(HERE, 'docs/data/oil.json')))
     cols = oil['cols']
+    # Същото изглаждане като в update.mjs: по-старата история се мащабира с множителя от последната смяна на договора
+    for s_, c in [('RB=F', 'gasoline'), ('HO=F', 'diesel'), ('BZ=F', 'brent')]:
+        m = (oil.get('adj') or {}).get(c) or {}
+        if m.get('from') and m.get('factor'):
+            cut = dt.date.fromisoformat(m['from'])
+            raw[s_] = {d: (v * m['factor'] if d < cut else v) for d, v in raw[s_].items()}
     for row in oil['rows']:
         d = dt.date.fromisoformat(row[0])
         for s, c in [('RB=F', 'gasoline'), ('HO=F', 'diesel'), ('BZ=F', 'brent')]:
-            if row[cols.index(c)] is not None:
-                raw[s][d] = row[cols.index(c)]
+            # изгладената серия (без скокове при смяна на месечния договор), ако я има
+            ci = cols.index(c + '_adj') if c + '_adj' in cols else cols.index(c)
+            if row[ci] is not None:
+                raw[s][d] = row[ci]
         if row[cols.index('eurusd')]:
             fx[d] = row[cols.index('eurusd')]
     return {s: {d: v for d, v in ser.items() if d in fx} for s, ser in raw.items()}, fx

@@ -56,7 +56,10 @@ const writeJson = (f, v) => writeFileSync(f, JSON.stringify(v) + '\n');
 // --- Fuelo с кеш, темпо и пазене на дневния лимит ---
 const cacheFile = path.join(dataDir, 'fuelo-cache.json');
 let cache = readJson(cacheFile, {});
-if (cache.date !== TODAY) cache = { date: TODAY, r: {} };
+// GitHub пуска задачите със закъснение от часове и понякога два пъти около полунощ. Затова новите цени от Fuelo
+// се теглят най-много веднъж на 18 часа; иначе се ползват последните, дори да са записани под вчерашна дата.
+const recent = cache.at && Date.now() - Date.parse(cache.at) < 18 * 3600e3;
+if (cache.date !== TODAY && !recent) cache = { date: TODAY, r: {} };
 let remaining = Infinity, calls = 0, lastCall = 0;
 // Заявки, които връщат само стари цени (А98 при някои марки), се питат веднъж седмично, не всеки ден
 const skipFile = path.join(dataDir, 'fuelo-skip.json'), skip = readJson(skipFile, {});
@@ -87,6 +90,7 @@ async function fuelo(p) {
   }
   const v = r.ok ? (await r.json()).data : null; // 404 no_data: няма такова гориво
   cache.r[p] = v;
+  cache.at ??= new Date().toISOString();
   writeJson(cacheFile, cache);
   return remember(p, v);
 }
@@ -105,11 +109,12 @@ async function yahoo(sym) {
 }
 const SYMS = { brent: 'BZ=F', wti: 'CL=F', diesel: 'HO=F', gasoline: 'RB=F', eurusd: 'EURUSD=X', eurron: 'EURRON=X' };
 
-// Yahoo сменя BZ=F (и HO=F, RB=F, CL=F) на следващия договор дни преди текущият да изтече, а TradingView (UKOIL)
-// и повечето сайтове показват текущия до края. Без поправка цената скача с разликата между двата месеца
-// (за Brent 2-3 $), а оценката вижда фалшиво поскъпване или поевтиняване.
-// Поправка: в последните 15 дни, където „непрекъснатата“ цена вече е равна на следващия договор,
-// а по-ранният още се търгува, слагаме цената на по-ранния.
+// Фючърсите се сменят всеки месец: когато един договор изтича, „непрекъснатата“ цена минава на следващия
+// и скача с разликата между двата месеца (при Brent понякога 3-4 $). Различните сайтове правят смяната в различни дни.
+// За графиката показваме непрекъснатата цена такава, каквато е (като ICE и TradingView). За модела обаче тези скокове
+// са фалшиви промени, затова му даваме изгладена серия: последния месец следва следващия договор, закотвен така, че
+// днешната цена е истинската, а всичко по-старо се мащабира с един множител, за да няма скок. Множителят се записва,
+// за да го приложи и model.py към по-старата история.
 const MONTHS = 'FGHJKMNQUVXZ';
 async function contract(root, y, m) {
   const sym = root + MONTHS[m] + String(y).slice(2) + '.NYM';
@@ -123,35 +128,36 @@ async function contract(root, y, m) {
     return out;
   } catch { return null; }
 }
-async function fixRoll(root, series) {
+async function rollAdjusted(root, series) {
   const now = new Date(), tries = [];
   for (let i = 0; i < 4; i++) { const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + i, 1)); tries.push(contract(root, t.getUTCFullYear(), t.getUTCMonth())); }
   const live = (await Promise.all(tries)).filter(Boolean);
-  if (live.length < 2) return 0;
-  const [front, next] = live, from = new Date(Date.now() - 15 * 864e5).toISOString().slice(0, 10);
-  let fixed = 0;
-  for (const d of Object.keys(series)) {
-    if (d < from || front[d] == null || next[d] == null) continue;
-    // Цените на договорите се свалят с няколко секунди разлика, затова не се иска пълно съвпадение:
-    // достатъчно е непрекъснатата цена да е много по-близо до следващия договор, отколкото до текущия
-    const gap = Math.abs(front[d] - next[d]);
-    if (gap >= 0.05 && Math.abs(series[d] - next[d]) < 0.25 * gap) { series[d] = front[d]; fixed++; }
-  }
-  return fixed;
+  const out = { ...series };
+  if (live.length < 2) return { series: out, from: null, factor: 1 };
+  const next = live[1], common = Object.keys(next).filter((d) => series[d] != null).sort();
+  if (!common.length) return { series: out, from: null, factor: 1 };
+  const first = common[0], last = common.at(-1);
+  const k = series[last] / next[last];                  // днешната цена остава истинската
+  for (const d of Object.keys(next)) if (d >= first) out[d] = next[d] * k;
+  const factor = (next[first] * k) / series[first];     // по-старото се мащабира, за да няма скок в началото на месеца
+  for (const d of Object.keys(series)) if (d < first) out[d] = series[d] * factor;
+  return { series: out, from: first, factor };
 }
 
 let oil = readJson(oilFile, null);
 try {
   const got = Object.fromEntries(await Promise.all(Object.entries(SYMS).map(async ([k, s]) => [k, await yahoo(s)])));
-  for (const [k, root] of [['brent', 'BZ'], ['wti', 'CL'], ['diesel', 'HO'], ['gasoline', 'RB']]) {
-    const n = await fixRoll(root, got[k]);
-    if (n) console.log(k + ': ' + n + ' дни сменени с текущия договор (Yahoo е минал на следващия по-рано)');
+  const adj = {}, adjMeta = {};
+  for (const [k, root] of [['brent', 'BZ'], ['diesel', 'HO'], ['gasoline', 'RB']]) {
+    const r = await rollAdjusted(root, got[k]);
+    adj[k] = r.series; adjMeta[k] = { from: r.from, factor: r.factor };
   }
   const dates = Object.keys(got.brent).filter((d) => got.eurusd[d]).sort();
   oil = {
     updated: new Date().toISOString(),
-    rows: dates.map((d) => [d, ...['brent', 'wti', 'diesel', 'gasoline', 'eurusd', 'eurron'].map((k) => got[k][d] ?? null)]),
-    cols: ['date', 'brent', 'wti', 'diesel', 'gasoline', 'eurusd', 'eurron'],
+    rows: dates.map((d) => [d, ...['brent', 'wti', 'diesel', 'gasoline', 'eurusd', 'eurron'].map((k) => got[k][d] ?? null), ...['brent', 'diesel', 'gasoline'].map((k) => adj[k][d] ?? null)]),
+    cols: ['date', 'brent', 'wti', 'diesel', 'gasoline', 'eurusd', 'eurron', 'brent_adj', 'diesel_adj', 'gasoline_adj'],
+    adj: adjMeta,
   };
   writeJson(oilFile, oil);
 } catch (e) {
@@ -174,7 +180,8 @@ const BASE = { gasoline: 'gasoline', gasoline98: 'gasoline', diesel: 'diesel', d
 
 // Цена на продукта в евро/литър по борсови дни
 function cost(src) {
-  const c = col({ 'RB=F': 'gasoline', 'HO=F': 'diesel', 'BZ=F': 'brent' }[src]);
+  // изгладената серия (без скокове при смяна на договора), ако я има
+  const name = { 'RB=F': 'gasoline', 'HO=F': 'diesel', 'BZ=F': 'brent' }[src], c = col(name + '_adj') >= 0 ? col(name + '_adj') : col(name);
   return oil.rows.filter((r) => r[c] != null && r[col('eurusd')]).map((r) => (src === 'BZ=F' ? r[c] / L_PER_BBL : r[c] / L_PER_GAL) / r[col('eurusd')]);
 }
 const avg = (a) => a.reduce((s, x) => s + x, 0) / a.length;
@@ -334,8 +341,10 @@ const checks = [];
 const ck = (ok, name, detail) => checks.push({ ok, name, detail });
 const n2 = (x, d = 2) => x.toFixed(d).replace('.', ',');
 {
-  const stale = Object.values(bg).filter((f) => f.date !== TODAY).map((f) => f.name);
-  ck(!stale.length && Object.keys(bg).length >= 4, 'Цените от Fuelo са днешни', stale.length ? 'Стари: ' + stale.join(', ') : Object.keys(bg).length + ' горива с дата ' + TODAY);
+  // Ако задачата тръгне след полунощ, последните цени във Fuelo още са вчерашни: това е нормално
+  const yest = new Date(Date.parse(TODAY + 'T12:00:00Z') - 864e5).toISOString().slice(0, 10);
+  const stale = Object.values(bg).filter((f) => f.date < yest).map((f) => f.name);
+  ck(!stale.length && Object.keys(bg).length >= 4, 'Цените от Fuelo са пресни', stale.length ? 'Стари: ' + stale.join(', ') : Object.keys(bg).length + ' горива с дата ' + [...new Set(Object.values(bg).map((f) => f.date))].join(', '));
 }
 if (model) {
   const w = (f) => model.fuels[f]?.weekly?.at(-1);
@@ -355,10 +364,11 @@ if (model) {
 // затова газьолът се записва всеки ден в data/ice-gasoil.csv и така се трупа собствена история.
 let gasoil = null;
 try {
-  const r = await fetch('https://scanner.tradingview.com/futures/scan', { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' }, body: JSON.stringify({ symbols: { tickers: ['ICEEUR:BRN1!', 'ICEEUR:ULS1!'] }, columns: ['close'] }) });
+  const r = await fetch('https://scanner.tradingview.com/futures/scan', { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' }, body: JSON.stringify({ symbols: { tickers: ['ICEEUR:BRN1!', 'ICEEUR:BRN2!', 'ICEEUR:ULS1!'] }, columns: ['close'] }) });
   const got = Object.fromEntries(((await r.json()).data || []).map((x) => [x.s, x.d[0]]));
-  const ice = got['ICEEUR:BRN1!'], y = oil.rows.at(-1)[col('brent')];
-  if (ice) { const dd = (y / ice - 1) * 100; ck(Math.abs(dd) <= 1.5, 'Brent: Yahoo срещу ICE', 'Yahoo ' + n2(y) + ' $, ICE ' + n2(ice) + ' $ (' + n2(dd, 1) + '%)'); }
+  // Около изтичането на договора Yahoo и ICE може да показват различни месеци: сравняваме с по-близкия
+  const y = oil.rows.at(-1)[col('brent')], ices = ['ICEEUR:BRN1!', 'ICEEUR:BRN2!'].map((t) => got[t]).filter(Boolean);
+  if (ices.length) { const ice = ices.reduce((a, b) => (Math.abs(b - y) < Math.abs(a - y) ? b : a)), dd = (y / ice - 1) * 100; ck(Math.abs(dd) <= 1.5, 'Brent: Yahoo срещу ICE', 'Yahoo ' + n2(y) + ' $, ICE ' + n2(ice) + ' $ (' + n2(dd, 1) + '%)'); }
   if (got['ICEEUR:ULS1!']) gasoil = got['ICEEUR:ULS1!'];
 } catch {}
 {
