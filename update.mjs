@@ -435,7 +435,10 @@ console.log('\n' + title + '\n' + body);
 
 const stateFile = path.join(dataDir, 'state.json'), state = readJson(stateFile, {});
 const topic = process.env.NTFY_TOPIC;
-if (topic && !NO_NTFY && state.ntfy !== TODAY) {
+// Известие веднъж за всеки нов ден с цени от Fuelo (не за всеки календарен ден): пускане по график, което
+// само преизползва вчерашните цени, не праща нищо, а първото пускане с новите цени праща
+const dataDate = D?.date || A?.date || TODAY;
+if (topic && !NO_NTFY && state.ntfy !== dataDate) {
   const headers = { Title: '=?UTF-8?B?' + Buffer.from(title).toString('base64') + '?=', Tags: 'fuelpump', Priority: '3' };
   if (process.env.SITE_URL) headers.Click = process.env.SITE_URL;
   // GitHub пуска задачите по график със закъснение, понякога с часове. Нощем (22:00 до 7:00) известието
@@ -449,5 +452,5 @@ if (topic && !NO_NTFY && state.ntfy !== TODAY) {
   }
   const r = await fetch('https://ntfy.sh/' + topic, { method: 'POST', body, headers });
   console.log('ntfy', r.status);
-  if (r.ok) writeJson(stateFile, { ...state, ntfy: TODAY });
+  if (r.ok) writeJson(stateFile, { ...state, ntfy: dataDate });
 }
