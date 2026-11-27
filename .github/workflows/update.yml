@@ -1,11 +1,11 @@
 # Основно се пуска от Synology NAS-а всеки ден в 10:00 (задача Grigorivo, workflow_dispatch); графикът тук е резерва.
 # Всеки ден: цени от Fuelo, петрол, оценка за утре, ntfy и обновено табло.
-# Едно пускане харчи около 40 от 100-те дневни заявки на Fuelo; повторно пускане в същия ден ползва кеша.
+# Едно пускане с нови цени харчи около 35 от 100-те дневни заявки на Fuelo; останалите ползват кеша.
 name: update
 on:
   schedule:
-    - cron: '17 9 * * *'   # около обяд в България
-    - cron: '47 13 * * *'  # резерва, ако GitHub пропусне първото; ползва кеша, без нови заявки към Fuelo
+    - cron: '17 9 * * *'   # резерва: тегли от Fuelo само ако NAS-ът не е пускал 26 часа
+    - cron: '47 13 * * *'  # втора резерва; GitHub често ги пуска с часове закъснение
   workflow_dispatch:
 permissions:
   contents: write
@@ -36,4 +36,6 @@ jobs:
           git config user.email '41898+github-actions[bot]@users.noreply.github.com'
           git add data docs/data
           git diff --cached --quiet || git commit -m "Данни за $(TZ=Europe/Sofia date +%F)"
-          git push
+          # Ако междувременно е качено нещо друго, push се отказва; без повторен опит кешът на Fuelo
+          # нямаше да се запише и следващото пускане щеше да тегли цените отново
+          ok=0; for i in 1 2 3; do git pull --rebase -q && git push -q && ok=1 && break; sleep 5; done; test $ok = 1

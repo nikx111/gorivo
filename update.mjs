@@ -80,7 +80,9 @@ async function fuelo(p) {
   const wait = lastCall + 12500 - Date.now(); // 5 заявки в минута
   if (wait > 0) await new Promise((ok) => setTimeout(ok, wait));
   lastCall = Date.now();
-  const r = await fetch('https://api.fuelo.net' + p, { headers: { Authorization: 'Bearer ' + KEY } });
+  let r;
+  try { r = await fetch('https://api.fuelo.net' + p, { headers: { Authorization: 'Bearer ' + KEY } }); }
+  catch (e) { console.log('Fuelo не отговори за ' + p + ': ' + e.message); return null; }
   calls++;
   const rem = r.headers.get('x-ratelimit-remaining');
   if (rem != null) remaining = +rem;
@@ -91,7 +93,10 @@ async function fuelo(p) {
     lastCall = 0;
     return fuelo(p);
   }
-  const v = r.ok ? (await r.json()).data : null; // 404 no_data: няма такова гориво
+  // Временна грешка (5xx, 401, 403) не се записва: иначе горивото щеше да се пропуска цяла седмица.
+  // Записва се само истински отговор или 404 no_data (няма такова гориво).
+  if (!r.ok && r.status !== 404) { console.log('Fuelo ' + r.status + ' за ' + p + ': пропускам без запис'); return null; }
+  const v = r.ok ? (await r.json()).data : null;
   cache.r[p] = v;
   cache.at ??= new Date().toISOString();
   writeJson(cacheFile, cache);
