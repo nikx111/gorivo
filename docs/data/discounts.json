@@ -1,0 +1,33 @@
+{
+  "checked": "2026-11-27",
+  "note": "Отстъпки с карти за лоялност, € за литър с ДДС. Попълват се на ръка от официалните страници; след valid_to не се прилагат. weekend важи и за официалните празници.",
+  "holidays": ["2026-12-24", "2026-12-25", "2026-12-26", "2027-01-01", "2027-03-03", "2027-04-30", "2027-05-01", "2027-05-02", "2027-05-03", "2027-05-06", "2027-05-24", "2027-09-06", "2027-09-22", "2027-12-24", "2027-12-25", "2027-12-26"],
+  "brands": {
+    "OMV": {
+      "card": "MyStation", "url": "https://www.omv.bg/bg-bg/aktualni-promotsii-s-omv-loyalna-karta", "valid_to": "2026-11-30", "confirmed": true,
+      "condition": "само през приложението MyStation, за цели литри",
+      "weekday": { "gasoline": 0.03, "diesel": 0.03, "gasoline98": 0.06, "dieselplus": 0.06 }
+    },
+    "Eko": {
+      "card": "EKO Smile", "url": "https://ekosmile.bg/pages/fuel-discounts", "valid_to": "2026-11-30", "confirmed": true,
+      "condition": "с физическа или дигитална карта EKO Smile",
+      "weekday": { "gasoline": 0.05, "diesel": 0.05, "gasoline98": 0.08, "dieselplus": 0.08, "lpg": 0.03 }
+    },
+    "Lukoil": {
+      "card": "ЛУКОЙЛ Клуб", "url": "https://club.lukoil.bg/adv-fuels/", "valid_to": null, "confirmed": true,
+      "condition": "с карта или приложението ЛУКОЙЛ Клуб",
+      "weekday": { "gasoline": 0.03, "diesel": 0.03, "gasoline98": 0.04, "dieselplus": 0.04, "lpg": 0.02 }
+    },
+    "Shell": {
+      "card": "ClubSmart", "url": "https://www.shell.bg/clubsmart.html", "valid_to": null, "confirmed": true,
+      "condition": "срещу 1 ClubSmart точка за литър: трябват натрупани точки",
+      "weekday": { "gasoline": 0.03, "diesel": 0.03, "gasoline98": 0.05, "dieselplus": 0.05, "lpg": 0.01 }
+    },
+    "Rompetrol": {
+      "card": "карта за отстъпка", "url": "https://fuelo.net/promotion/id/9", "valid_to": null, "confirmed": false,
+      "condition": "картата се взима на касата при зареждане на поне 25 л; данните са от Fuelo, без дата, на сайта на Rompetrol не са публикувани",
+      "weekday": { "gasoline": 0.03, "diesel": 0.03 },
+      "weekend": { "gasoline": 0.04, "diesel": 0.04 }
+    }
+  }
+}

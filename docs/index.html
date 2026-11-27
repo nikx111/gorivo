@@ -23,7 +23,7 @@
 :root {
   --bg: #f5f6f8; --surface: #ffffff; --surface-2: #f0f2f5; --line: #e3e6eb;
   --text: #14171c; --muted: #5d6573; --faint: #8b93a1;
-  --accent: #e8590c; --accent-soft: #fff1e8; --accent-text: #b8440a;
+  --accent: #e8590c; --accent-soft: #fff1e8; --accent-text: #b8440a; --down-text: #23703a;
   --up: #c92a2a; --down: #2b8a3e; --flat: #5d6573;
   --up-soft: #fdecec; --down-soft: #e9f6ec;
   --c1: #e8590c; --c2: #1971c2; --c3: #7048e8; --c4: #0c8599;
@@ -34,7 +34,7 @@
   :root:not([data-theme="light"]) {
     --bg: #0d1014; --surface: #151a21; --surface-2: #1c222b; --line: #262d38;
     --text: #e9edf2; --muted: #9aa4b2; --faint: #6b7584;
-    --accent: #ff8a3d; --accent-soft: #2a1a10; --accent-text: #ff9a52;
+    --accent: #ff8a3d; --accent-soft: #2a1a10; --accent-text: #ff9a52; --down-text: #51cf66;
     --up: #ff6b6b; --down: #51cf66; --flat: #9aa4b2;
     --up-soft: #3a1d1f; --down-soft: #16301d;
     --c1: #ff8a3d; --c2: #4dabf7; --c3: #9775fa; --c4: #3bc9db;
@@ -44,7 +44,7 @@
 :root[data-theme="dark"] {
   --bg: #0d1014; --surface: #151a21; --surface-2: #1c222b; --line: #262d38;
   --text: #e9edf2; --muted: #9aa4b2; --faint: #6b7584;
-  --accent: #ff8a3d; --accent-soft: #2a1a10; --accent-text: #ff9a52;
+  --accent: #ff8a3d; --accent-soft: #2a1a10; --accent-text: #ff9a52; --down-text: #51cf66;
   --up: #ff6b6b; --down: #51cf66; --flat: #9aa4b2;
   --up-soft: #3a1d1f; --down-soft: #16301d;
   --c1: #ff8a3d; --c2: #4dabf7; --c3: #9775fa; --c4: #3bc9db;
@@ -121,6 +121,12 @@ tr.brandrow td:first-child { white-space: nowrap; }
 .flink:hover { color: var(--accent-text); background: var(--surface-2); }
 .flink:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .flink svg { width: 14px; height: 14px; }
+.cardp { display: block; font-size: 11.5px; color: var(--down-text); font-weight: 600; margin-top: 2px; white-space: nowrap; }
+.cardalt { display: block; font-weight: 500; color: var(--muted); font-size: 10.5px; }
+.cards ul { margin: 6px 0 0; padding-left: 18px; }
+.cards li { margin: 3px 0; }
+.cards .lbl2 { color: var(--muted); }
+.cards a { color: var(--accent-text); }
 .allst { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
 .allst a { color: var(--accent-text); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .allst a:hover { text-decoration: underline; }
@@ -361,8 +367,8 @@ footer a { color: var(--muted); }
   </section>
 
   <section data-sec="brands">
-    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="brands" aria-label="Премести блока „По бензиностанции“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>По бензиностанции</h2></div><p class="sub">Средна цена на марката в страната, € за литър. Зеленото е най-евтиното. Натисни марка за историята ѝ, хвани точките, за да я преместиш.</p></div></div>
-    <div class="card scroll"><table id="brands"></table><div class="note" id="brandnote" hidden></div><div class="note allst"><span>Тук са избраните марки. Цените на всички бензиностанции в страната са във Fuelo.</span><a href="https://bg.fuelo.net/gasstations?lang=bg" target="_blank" rel="noopener">Всички бензиностанции във Fuelo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a></div></div>
+    <div class="head"><div><div class="titlerow"><button class="grip secgrip" data-sec="brands" aria-label="Премести блока „По бензиностанции“: хвани или ползвай стрелките"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg></button><h2>По бензиностанции</h2></div><p class="sub">Средна цена на марката в страната, € за литър; отдолу в зелено е цената с карта за лоялност. Зеленото число е най-евтиното без карта. Натисни марка за историята ѝ, хвани точките, за да я преместиш.</p></div></div>
+    <div class="card scroll"><table id="brands"></table><div class="note" id="brandnote" hidden></div><div class="note cards" id="cardsnote" hidden></div><div class="note allst"><span>Тук са избраните марки. Цените на всички бензиностанции в страната са във Fuelo.</span><a href="https://bg.fuelo.net/gasstations?lang=bg" target="_blank" rel="noopener">Всички бензиностанции във Fuelo <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a></div></div>
     <p class="scrollhint" data-for="brands">Плъзни таблицата настрани за още колони</p>
   </section>
 
@@ -613,7 +619,9 @@ function renderBrands() {
       return `<tr class="brandrow" data-b="${b.name}"><td><button class="grip" data-brand="${b.name}" aria-label="Премести ${b.name}: хвани или ползвай стрелките">${GRIP}</button><button class="exp" aria-expanded="${open}" ${has ? '' : 'disabled'}>${has ? ICON.right : ''}${logo(b.name)}</button><a class="flink" href="${fueloBrand(b)}" target="_blank" rel="noopener" aria-label="${b.name} във Fuelo (нов раздел)" title="Бензиностанциите на ${b.name} във Fuelo">${EXT}</a></td>${cols.map((c) => {
         const p = b.prices[c];
         if (!p) return '<td class="num" style="color:var(--faint)">няма</td>';
-        return `<td class="num ${p.price === best[c] ? 'best' : ''}">${fmt(p.price)}${p.label ? `<span class="lbl">${p.label}</span>` : ''}</td>`;
+        const d = cardDisc(b.name, c);
+        const card = d ? `<span class="cardp" title="С карта ${DISC.brands[b.name].card}${DISC.brands[b.name].confirmed ? '' : ' (непотвърдено)'}">с карта ${fmt(p.price - d.now)}${d.alt != null && Math.abs(d.alt - d.now) > 1e-9 ? `<span class="cardalt">${d.weekendNow ? 'делник' : 'уикенд'} ${fmt(p.price - d.alt)}</span>` : ''}${DISC.brands[b.name].confirmed ? '' : '*'}</span>` : '';
+        return `<td class="num ${p.price === best[c] ? 'best' : ''}">${fmt(p.price)}${p.label ? `<span class="lbl">${p.label}</span>` : ''}${card}</td>`;
       }).join('')}</tr>` + (open ? `<tr class="detail"><td colspan="${cols.length + 1}">${brandDetail(b, cols)}</td></tr>` : '');
     }).join('') + `<tr><td style="color:var(--muted)">Средно за страната</td>${cols.map((c) => `<td class="num" style="color:var(--muted)">${fmt(L.bg[c]?.price)}</td>`).join('')}</tr></tbody>`;
   list.filter((b) => openBrands.has(b.name)).forEach((b) => drawBrand(b, cols));
@@ -626,6 +634,28 @@ const BRAND_ID = { OMV: 3, Rompetrol: 4, Eko: 1, Lukoil: 2, Shell: 5 };
 const fueloBrand = (b) => 'https://bg.fuelo.net/brand/id/' + (b.id ?? BRAND_ID[b.name]) + '?lang=bg';
 const logo = (name) => `<span class="blogo">${LOGOS[name] ? `<img src="logos/${LOGOS[name]}" alt="" loading="lazy">` : ''}</span><span class="bname">${name}</span>`;
 const EXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
+// Отстъпки с карти за лоялност (docs/data/discounts.json): само докато важат; в уикенд и празник може да са различни
+let DISC = null;
+const isWeekend = (d) => { const w = new Date(d + 'T12:00:00').getDay(); return w === 0 || w === 6 || (DISC?.holidays || []).includes(d); };
+function cardDisc(brand, fuel, date = L.date) {
+  const b = DISC?.brands?.[brand]; if (!b) return null;
+  if (b.valid_to && date > b.valid_to) return null;
+  const wd = b.weekday?.[fuel], we = b.weekend?.[fuel] ?? wd;
+  if (wd == null && we == null) return null;
+  const weekendNow = isWeekend(date);
+  return { now: weekendNow ? we : wd, alt: weekendNow ? wd : we, weekendNow };
+}
+function renderCards() {
+  if (!DISC) { $('#cardsnote').hidden = true; return; }
+  const today = L.date, rows = brandsSorted().map((b) => {
+    const c = DISC.brands[b.name]; if (!c) return '';
+    const expired = c.valid_to && today > c.valid_to;
+    const amounts = Object.entries(c.weekday || {}).filter(([f]) => FUELS[f] || f === 'lpg').map(([f, v]) => (FUELS[f] || 'Газ') + ' ' + fmt(v * 100, 0) + ' ст.' + (c.weekend?.[f] != null && c.weekend[f] !== v ? ' (уикенд ' + fmt(c.weekend[f] * 100, 0) + ' ст.)' : '')).join(', ');
+    return `<li><b>${b.name}, ${c.card}:</b> ${expired ? '<span class="diff up">срокът е изтекъл на ' + dmy(c.valid_to) + ', отстъпката не е приложена</span>' : amounts}. <span class="lbl2">${c.condition}${c.valid_to && !expired ? ', до ' + dmy(c.valid_to) : ''}. <a href="${c.url}" target="_blank" rel="noopener">${c.confirmed ? 'Източник' : 'Източник (непотвърдено)'}</a></span></li>`;
+  }).join('');
+  $('#cardsnote').innerHTML = `<b>Цена с карта за лоялност</b> (днес е ${isWeekend(today) ? 'уикенд или празник' : 'делничен ден'}; проверено на ${dmy(DISC.checked)}.${DISC.checked.slice(2, 4)}):<ul>${rows}</ul>`;
+  $('#cardsnote').hidden = false;
+}
 const MIN_DAYS = 5;
 function brandDetail(b, cols) {
   const days = new Set(cols.flatMap((c) => brandRows(b, c).map((r) => r[0]))).size;
@@ -748,7 +778,7 @@ function renderHistTabs() {
   if (!fuelOrder.includes(histFuel)) histFuel = fuelOrder[0];
   $('#histfuel').innerHTML = fuelOrder.map((c) => `<button data-v="${c}" aria-pressed="${c === histFuel}">${L.bg[c].name}</button>`).join('');
 }
-function renderAll() { renderMine(); renderWhen(); renderFuels(); renderBrands(); renderBars(); renderCountries(); renderHistTabs(); }
+function renderAll() { renderMine(); renderWhen(); renderFuels(); renderBrands(); renderCards(); renderBars(); renderCountries(); renderHistTabs(); }
 
 // Борсата: дни, седмици или месеци за избран период
 const gSeries = seg('#series', drawOil), gCur = seg('#cur', drawOil), gGran = seg('#gran', drawOil), gSpan = seg('#span', drawOil);
@@ -893,8 +923,8 @@ function renderChecks() {
   $('#checks').innerHTML = c.length ? c.map((x) => `<div class="check">${x.ok ? OKI : BADI}<div>${x.name}<small class="num">${x.detail}</small></div></div>`).join('') : '<div class="check"><div></div><div>Няма проверки в тези данни</div></div>';
 }
 
-Promise.all(['latest', 'oil', 'history', 'model'].map((f) => fetch('data/' + f + '.json?' + Date.now()).then((r) => (r.ok ? r.json() : null)))).then(([l, o, h, m]) => {
-  L = l; OIL = o; HIST = h; MODEL = m;
+Promise.all(['latest', 'oil', 'history', 'model', 'discounts'].map((f) => fetch('data/' + f + '.json?' + Date.now()).then((r) => (r.ok ? r.json() : null)).catch(() => null))).then(([l, o, h, m, dsc]) => {
+  L = l; OIL = o; HIST = h; MODEL = m; DISC = dsc;
   const up = new Date(L.updated);
   $('#meta').innerHTML = 'Обновено ' + up.toLocaleString('bg-BG', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Sofia' }) +
     (L.bno ? `<span class="bno"><br>BNO (Brent фонд) <span class="num">${fmt(L.bno.price)} $ ${pct(L.bno.change)}</span></span>` : '');
