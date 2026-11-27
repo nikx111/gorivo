@@ -58,7 +58,10 @@ const cacheFile = path.join(dataDir, 'fuelo-cache.json');
 let cache = readJson(cacheFile, {});
 // GitHub пуска задачите със закъснение от часове и понякога два пъти около полунощ. Затова новите цени от Fuelo
 // се теглят най-много веднъж на 18 часа; иначе се ползват последните, дори да са записани под вчерашна дата.
-const recent = cache.at && Date.now() - Date.parse(cache.at) < 18 * 3600e3;
+// Основното пускане е от NAS-а всеки ден в 10:00 (workflow_dispatch). Пусканията по график на GitHub са само резерва:
+// те теглят нови цени чак ако от последното теглене са минали 26 часа, тоест ако NAS-ът не е пускал.
+const maxAgeH = process.env.RUN_KIND === 'schedule' ? 26 : 18;
+const recent = cache.at && Date.now() - Date.parse(cache.at) < maxAgeH * 3600e3;
 if (cache.date !== TODAY && !recent) cache = { date: TODAY, r: {} };
 let remaining = Infinity, calls = 0, lastCall = 0;
 // Заявки, които връщат само стари цени (А98 при някои марки), се питат веднъж седмично, не всеки ден
