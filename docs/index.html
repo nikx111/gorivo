@@ -123,8 +123,27 @@ tr.brandrow td:first-child { white-space: nowrap; }
 .flink svg { width: 14px; height: 14px; }
 .cardp { display: block; font-size: 11.5px; color: var(--down-text); font-weight: 600; margin-top: 2px; white-space: nowrap; }
 .cardalt { display: block; font-weight: 500; color: var(--muted); font-size: 10.5px; }
-.cards ul { margin: 6px 0 0; padding-left: 18px; }
-.cards li { margin: 3px 0; }
+.ctab { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: 12.5px; }
+.ctab th, .ctab td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+.ctab thead th { border-top: 0; color: var(--muted); font-weight: 600; white-space: nowrap; }
+.ctab td.num { white-space: nowrap; color: var(--down-text); font-weight: 600; }
+.ctab td.num span { display: block; font-weight: 500; }
+.ctab td.none { color: var(--faint); font-weight: 400; }
+.ctab .bn { color: var(--text); font-weight: 600; white-space: nowrap; }
+.ctab .bc { display: block; font-weight: 400; color: var(--muted); font-size: 11.5px; white-space: normal; min-width: 150px; }
+.cscroll { overflow-x: auto; }
+.report-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+dialog.report { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--text); padding: 20px; width: min(420px, calc(100vw - 32px)); box-sizing: border-box; }
+dialog.report::backdrop { background: rgba(0,0,0,.45); }
+dialog.report h3 { margin: 0 0 6px; font-size: 17px; }
+dialog.report p { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+dialog.report label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
+dialog.report select, dialog.report textarea { width: 100%; box-sizing: border-box; font: 14px Inter, sans-serif; color: var(--text); background: var(--surface-2); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; }
+dialog.report textarea { min-height: 90px; resize: vertical; }
+dialog.report .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+dialog.report .send { background: var(--accent-text); border-color: var(--accent-text); color: var(--surface); font-weight: 600; }
+dialog.report .msg { margin: 10px 0 0; font-size: 13px; }
+dialog.report .msg.ok { color: var(--down-text); } dialog.report .msg.err { color: var(--up); }
 .cards .lbl2 { color: var(--muted); }
 .cards a { color: var(--accent-text); }
 .allst { display: flex; align-items: center; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
@@ -427,8 +446,27 @@ footer a { color: var(--muted); }
     <p><b>ГРИГОРИВО</b> е игра на думи: Григор и Иво, а в средата е горивото. Цените се събират веднъж на ден.</p>
     <p><b>Как се смята оценката.</b> Моделът е изчислен върху официалните седмични цени в България от Седмичния петролен бюлетин на Европейската комисия (от 2015 г.) и борсовите цени на бензин RBOB и дизел ULSD в евро. Той описва две неща: колко от промяната на борсата стига до колонката и за колко седмици, и колко бързо цената се връща към нивото, което борсата оправдава. Коефициентите се изчисляват наново всяка седмица върху последните 3 до 4 години. Оценката за следващите дни е тази седмична промяна, разпределена по дни и приложена към днешната цена от Fuelo. После се поправя според собствените грешки на ГРИГОРИВО и според това как се движат цените в различните дни от седмицата и около празници. Диапазонът показва къде е цената в 8 от 10 случая. Това е оценка, не обещание: търговците решават сами кога и с колко да сменят цените.</p>
     <p>Източници: цени на колонката от <a href="https://fuelo.net" rel="noopener">Fuelo.net</a>, борсови цени и курсове от Yahoo Finance (фючърси BZ=F, CL=F, HO=F, RB=F). Седмични цени и данъци от <a href="https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en" rel="noopener">бюлетина на ЕК</a>; акцизът е изчислен от него (бензин 0,363 €/л, дизел 0,330 €/л). Проверки: Brent срещу ICE, курсът срещу ЕЦБ. Данните се обновяват веднъж на ден.</p>
+    <p><button class="btn" type="button" data-report="">Видя грешка? Кажи ни</button></p>
   </footer>
 </div>
+<dialog class="report" id="report" aria-labelledby="reporth">
+  <form method="dialog" id="reportform">
+    <h3 id="reporth">Видя грешка?</h3>
+    <p>Кажи какво не е наред. Отива направо при нас, без име и без имейл.</p>
+    <label for="rtopic">Къде е грешката</label>
+    <select id="rtopic">
+      <option>Отстъпка с карта</option>
+      <option>Цена на бензиностанция</option>
+      <option>Средна цена</option>
+      <option>Прогноза</option>
+      <option>Друго</option>
+    </select>
+    <label for="rtext">Какво видя</label>
+    <textarea id="rtext" maxlength="600" placeholder="Например: в Shell дизелът днес е 1,45, а тук пише 1,49"></textarea>
+    <div class="msg" id="rmsg" role="status" aria-live="polite"></div>
+    <div class="acts"><button class="btn" type="button" id="rclose">Затвори</button><button class="btn send" type="submit" id="rsend">Изпрати</button></div>
+  </form>
+</dialog>
 
 <script>
 /* ds-allow-hardcode:start */
@@ -648,15 +686,49 @@ function cardDisc(brand, fuel, date = L.date) {
 }
 function renderCards() {
   if (!DISC) { $('#cardsnote').hidden = true; return; }
-  const today = L.date, rows = brandsSorted().map((b) => {
+  const today = L.date, cols = [...fuelCols(), 'lpg'];
+  const ct = (v) => fmt(v * 100, 0) + ' ст.';
+  const cell = (c, f) => {
+    const wd = c.weekday?.[f], we = c.weekend?.[f] ?? wd;
+    if (wd == null && we == null) return '<td class="num none">няма</td>';
+    if (wd === we) return `<td class="num">${ct(wd)}</td>`;
+    return `<td class="num">${ct(wd)} делник<span>${ct(we)} уикенд</span></td>`;
+  };
+  const rows = brandsSorted().map((b) => {
     const c = DISC.brands[b.name]; if (!c) return '';
     const expired = c.valid_to && today > c.valid_to;
-    const amounts = Object.entries(c.weekday || {}).filter(([f]) => FUELS[f] || f === 'lpg').map(([f, v]) => (FUELS[f] || 'Газ') + ' ' + fmt(v * 100, 0) + ' ст.' + (c.weekend?.[f] != null && c.weekend[f] !== v ? ' (уикенд ' + fmt(c.weekend[f] * 100, 0) + ' ст.)' : '')).join(', ');
-    return `<li><b>${b.name}, ${c.card}:</b> ${expired ? '<span class="diff up">срокът е изтекъл на ' + dmy(c.valid_to) + ', отстъпката не е приложена</span>' : amounts}. <span class="lbl2">${c.condition}${c.valid_to && !expired ? ', до ' + dmy(c.valid_to) : ''}. <a href="${c.url}" target="_blank" rel="noopener">${c.confirmed ? 'Източник' : 'Източник (непотвърдено)'}</a></span></li>`;
+    const info = `<span class="bc">${c.card[0].toUpperCase() + c.card.slice(1)}. ${c.condition[0].toUpperCase() + c.condition.slice(1)}${c.valid_to && !expired ? '. До ' + dmy(c.valid_to) : ''}. <a href="${c.url}" target="_blank" rel="noopener">${c.confirmed ? 'Източник' : 'Източник, непотвърдено'}</a></span>`;
+    return `<tr><td class="bn">${b.name}${info}</td>${expired ? `<td colspan="${cols.length}" class="diff up">Срокът изтече на ${dmy(c.valid_to)}, отстъпката не е приложена.</td>` : cols.map((f) => cell(c, f)).join('')}</tr>`;
   }).join('');
-  $('#cardsnote').innerHTML = `<b>Цена с карта за лоялност</b> (днес е ${isWeekend(today) ? 'уикенд или празник' : 'делничен ден'}; проверено на ${dmy(DISC.checked)}.${DISC.checked.slice(2, 4)}):<ul>${rows}</ul>`;
+  $('#cardsnote').innerHTML = `<b>Отстъпка с карта за лоялност</b>, в евроценти за литър. Днес е ${isWeekend(today) ? 'уикенд или празник' : 'делничен ден'}. Проверено на ${dmy(DISC.checked)}.${DISC.checked.slice(2, 4)} в сайтовете на марките.
+    <div class="cscroll"><table class="ctab"><thead><tr><th>Марка</th>${cols.map((f) => `<th>${FUELS[f]}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="report-row"><span>Важи всеки ден, освен където пише делник и уикенд.</span><button class="btn" type="button" data-report="Отстъпка с карта">Видя грешна отстъпка? Кажи ни</button></div>`;
   $('#cardsnote').hidden = false;
 }
+// Сигнал за грешка: отива като известие в ntfy (тема само за сигнали, без лични данни)
+const REPORT_URL = 'https://ntfy.sh/grigorivo-greshki-8a4cb83e';
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-report]'); if (!b) return;
+  const dlg = $('#report'); if (b.dataset.report) $('#rtopic').value = b.dataset.report;
+  $('#rmsg').textContent = ''; $('#rmsg').className = 'msg'; $('#rsend').disabled = false;
+  dlg.showModal(); $('#rtext').focus();
+});
+$('#rclose').addEventListener('click', () => $('#report').close());
+$('#reportform').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = $('#rtext').value.trim(), msg = $('#rmsg');
+  if (text.length < 3) { msg.className = 'msg err'; msg.textContent = 'Напиши с няколко думи какво видя.'; return; }
+  let last = 0; try { last = +localStorage.getItem('reportAt') || 0; } catch {}
+  if (Date.now() - last < 60000) { msg.className = 'msg err'; msg.textContent = 'Току що изпрати сигнал. Пробвай пак след минута.'; return; }
+  $('#rsend').disabled = true;
+  try {
+    const r = await fetch(REPORT_URL, { method: 'POST', headers: { Title: 'GRIGORIVO: signal za greshka', Tags: 'warning' },
+      body: `${$('#rtopic').value}\n${text}\n\nДанни от ${L?.date || '?'}, екран ${innerWidth}px` });
+    if (!r.ok) throw new Error(r.status);
+    try { localStorage.setItem('reportAt', Date.now()); } catch {}
+    msg.className = 'msg ok'; msg.textContent = 'Получихме го, благодарим. Ще го проверим.'; $('#rtext').value = '';
+  } catch { msg.className = 'msg err'; msg.textContent = 'Не се изпрати. Пробвай пак след малко.'; $('#rsend').disabled = false; }
+});
 const MIN_DAYS = 5;
 function brandDetail(b, cols) {
   const days = new Set(cols.flatMap((c) => brandRows(b, c).map((r) => r[0]))).size;

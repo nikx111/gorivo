@@ -1,6 +1,6 @@
 // Работа без интернет: страницата и библиотеките се пазят в кеша, а данните се взимат от мрежата,
 // когато има, и от кеша, когато няма (тогава се виждат последните заредени цени).
-const VERSION = 'gorivo-v7';
+const VERSION = 'gorivo-v8';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
   './logos/omv-mark.svg', './logos/lukoil-mark.svg', './logos/rompetrol-mark.png', './logos/shell-mark.png', './logos/eko-mark.png',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js', 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'];
