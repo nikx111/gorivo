@@ -225,6 +225,18 @@ for (const f of FUELS) {
   let d = await fuelo('/v2/prices/average?country=bg&fuel=' + f.code), code = f.code;
   if (!fresh(d) && f.alt) { d = await fuelo('/v2/prices/average?country=bg&fuel=' + f.alt); code = f.alt; }
   if (!fresh(d)) continue;
+  // Fuelo понякога има грешно въведена цена в някоя бензиностанция (на 28.11 газ 79 €/л вместо 0,79), която вдига
+  // средното. Такъв ден не се приема: ползва се последната сигурна цена, а денят не влиза в историята и ученето.
+  const prevGood = hist.filter((r) => r.fuel === f.code && r.date < d.date).sort((a, b) => b.date.localeCompare(a.date))[0];
+  const jump = prevGood ? Math.abs(d.price / prevGood.price - 1) : 0;
+  const outlier = d.max > d.price * 3 || (d.min > 0 && d.min < d.price / 3);
+  let suspect = null;
+  if ((outlier && jump > 0.03) || jump > 0.08) {
+    suspect = { fuelo: d.price, min: d.min, max: d.max, reason: outlier ? 'грешна цена в някоя бензиностанция (от ' + d.min + ' до ' + d.max + ' €)' : 'скок с ' + Math.round(jump * 100) + '% за ден' };
+    console.log('Fuelo: съмнителна средна цена за ' + f.name + ' (' + d.price + ' €, ' + suspect.reason + ')' + (prevGood ? ', ползвам ' + prevGood.price + ' € от ' + prevGood.date : ''));
+    if (!prevGood) continue;
+    d = { ...d, price: prevGood.price, min: prevGood.min, max: prevGood.max };
+  }
   const pr = pressure(f, d.price), { k, n } = fitK(f.code);
   const mp = model?.fuels?.[BASE[f.code]]?.path, method = mp && mp[d.date] != null ? 'model' : 'rule';
   const ahead = [];
@@ -242,7 +254,8 @@ for (const f of FUELS) {
     modelToday: method === 'model' ? mp[d.date] : null,
     breakdown: product == null ? null : { product, excise, vat, margin: d.price - vat - excise - product },
   };
-  upsert({ date: d.date, fuel: f.code, price: d.price, min: d.min, max: d.max, cost: +pr.cost.toFixed(4), pressure: +pr.p.toFixed(4) });
+  bg[f.code].suspect = suspect;
+  if (!suspect) upsert({ date: d.date, fuel: f.code, price: d.price, min: d.min, max: d.max, cost: +pr.cost.toFixed(4), pressure: +pr.p.toFixed(4) });
 }
 
 // --- 2. Марки: OMV, Rompetrol, Eko, Lukoil, Shell ---
@@ -316,7 +329,7 @@ for (const [code, f] of Object.entries(bg)) {
   f.learn = learned[code];
   f.weekdays = { eff: W.eff, n: W.n, weeks: W.weeks };
 }
-for (const [code, f] of Object.entries(bg)) for (const a of f.ahead) {
+for (const [code, f] of Object.entries(bg)) for (const a of f.suspect ? [] : f.ahead) {
   const i = fcs.findIndex((r) => r.made === f.date && r.target === a.date && r.fuel === code);
   const row = { made: f.date, target: a.date, fuel: code, base: f.price, raw: a.raw, pred: a.price, method: f.method };
   if (i >= 0) fcs[i] = row; else fcs.push(row);
@@ -343,6 +356,10 @@ console.log('Учене: ' + Object.entries(learned).map(([c, l]) => c + ' ск�
 
 const latestGasoil = {};
 const days7 = (d) => (Date.parse(TODAY) - Date.parse(d)) / 864e5 >= 7 && (Date.parse(TODAY) - Date.parse(d)) / 864e5 <= 10;
+
+// Конкретните месечни договори на ICE за следващите 3 месеца (напр. ICEEUR:BRNF2027): Yahoo понякога показва
+// изтичащия договор, а BRN1! на ICE вече следващия, затова сравняваме и с тях
+const iceMonths = (root) => { const now = new Date(); return [1, 2, 3].map((i) => { const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + i, 1)); return 'ICEEUR:' + root + 'FGHJKMNQUVXZ'[t.getUTCMonth()] + t.getUTCFullYear(); }); };
 
 // --- Проверки на данните: всяка стойност се сверява с независим източник ---
 const checks = [];
@@ -372,10 +389,10 @@ if (model) {
 // затова газьолът се записва всеки ден в data/ice-gasoil.csv и така се трупа собствена история.
 let gasoil = null;
 try {
-  const r = await fetch('https://scanner.tradingview.com/futures/scan', { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' }, body: JSON.stringify({ symbols: { tickers: ['ICEEUR:BRN1!', 'ICEEUR:BRN2!', 'ICEEUR:ULS1!'] }, columns: ['close'] }) });
+  const r = await fetch('https://scanner.tradingview.com/futures/scan', { method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' }, body: JSON.stringify({ symbols: { tickers: ['ICEEUR:BRN1!', 'ICEEUR:BRN2!', 'ICEEUR:ULS1!', ...iceMonths('BRN')] }, columns: ['close'] }) });
   const got = Object.fromEntries(((await r.json()).data || []).map((x) => [x.s, x.d[0]]));
   // Около изтичането на договора Yahoo и ICE може да показват различни месеци: сравняваме с по-близкия
-  const y = oil.rows.at(-1)[col('brent')], ices = ['ICEEUR:BRN1!', 'ICEEUR:BRN2!'].map((t) => got[t]).filter(Boolean);
+  const y = oil.rows.at(-1)[col('brent')], ices = ['ICEEUR:BRN1!', 'ICEEUR:BRN2!', ...iceMonths('BRN')].map((t) => got[t]).filter(Boolean);
   if (ices.length) { const ice = ices.reduce((a, b) => (Math.abs(b - y) < Math.abs(a - y) ? b : a)), dd = (y / ice - 1) * 100; ck(Math.abs(dd) <= 1.5, 'Brent: Yahoo срещу ICE', 'Yahoo ' + n2(y) + ' $, ICE ' + n2(ice) + ' $ (' + n2(dd, 1) + '%)'); }
   if (got['ICEEUR:ULS1!']) gasoil = got['ICEEUR:ULS1!'];
 } catch {}
@@ -411,6 +428,7 @@ try {
   const jumps = Object.entries(bg).map(([c, f]) => { const prev = hist.filter((r) => r.fuel === c && r.date < f.date).sort((a, b) => b.date.localeCompare(a.date))[0]; return prev && Math.abs(f.price / prev.price - 1) > 0.05 ? f.name : null; }).filter(Boolean);
   ck(!jumps.length, 'Няма скокове над 5% за ден', jumps.length ? 'Скок при ' + jumps.join(', ') : 'Цените са в нормални граници');
 }
+for (const f of Object.values(bg)) if (f.suspect) ck(false, f.name + ': съмнителна цена от Fuelo', 'Fuelo даде ' + n2(f.suspect.fuelo) + ' €, ' + f.suspect.reason + '; показана е последната сигурна цена ' + n2(f.price) + ' €');
 const failed = checks.filter((c) => !c.ok);
 console.log('Проверки: ' + (checks.length - failed.length) + ' от ' + checks.length + ' са наред' + (failed.length ? ' (' + failed.map((c) => c.name).join('; ') + ')' : ''));
 

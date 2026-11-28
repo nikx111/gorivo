@@ -602,6 +602,7 @@ function renderFuels() {
       <div class="trend ${dir(d3)}">${trend}</div>
       <div class="days">${three.map((a) => `<div>${wd(a.date)} ${dmy(a.date)}<b class="num">~${fmt(a.price)}</b></div>`).join('')}</div>
       <div class="range num">В страната от ${fmt(f.min)} до ${fmt(f.max)} €</div>
+      ${f.suspect ? `<div class="range" style="color:var(--up)">Fuelo днес показа ${fmt(f.suspect.fuelo)} €, но в данните има грешка, затова е показана последната сигурна цена.</div>` : ''}
     </div>`; }).join('');
 }
 
